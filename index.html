@@ -191,7 +191,7 @@ button:disabled {
     <p><strong>⚠️ NO SON COBROS QUE CORRESPONDAN A MESES, DÍAS u HORAS DE ACTIVIDAD;</strong> SINO UNA APORTACIÓN ANUAL PARA EL SUSTENTO DEL CLUB PARA TODO EL AÑO.</p>
     <p>⚠️ Según la categoría y la sección, el plazo y la duración de entrenamiento suele variar.</p>
     <p>ℹ️ A partir del 1 de octubre de 2025 (1 de noviembre para Master), las nuevas inscripciones tendrán que abonar cuota de alta de 28€.</p>
-    <p>Junto con la inscripción, la persona inscrita o tutor legal se hace socio/a del club, con derecho a participar y votar. <a href="https://www.es.buruntzaldeaikt.eus/assets/files/BIKT-ESTATUTUAK-CAS.pdf" target="_blank">Ver Estatutos</a></p>
+    <p>Junto con la inscripción, la persona inscrita o tutor legal se hace socio/a del club, con derecho a participar y votar. <a href="https://www.es.buruntzaldeaikt.eus/el-club/estatutos" target="_blank">Ver Estatutos</a></p>
   </div>
 
   <div class="row">
@@ -225,11 +225,529 @@ button:disabled {
   </div>
 </div>
 
-<!-- Aquí va todo tu <script> sin cambios, manteniendo lógica CSV, RGI, popups, cálculos -->
+<script>
+// --------------------- CONFIGURACIÓN DE CSV ---------------------
+const csvSheets = {
+"2019 1 día Lasarte-Oria":"https://docs.google.com/spreadsheets/d/e/2PACX-1vRk3A_LNtXB7oYO6aB-uPr8546sqdrxIGEvNkDxL2azMjwgxPNovIBfwO9U87vVo7KAk6zF6tJGfWVa/pub?gid=1104631462&single=true&output=csv",
+"2019 2 días Lasarte-Oria":"https://docs.google.com/spreadsheets/d/e/2PACX-1vRk3A_LNtXB7oYO6aB-uPr8546sqdrxIGEvNkDxL2azMjwgxPNovIBfwO9U87vVo7KAk6zF6tJGfWVa/pub?gid=594372538&single=true&output=csv",
+"2018-2014 Lasarte-Oria":"https://docs.google.com/spreadsheets/d/e/2PACX-1vRk3A_LNtXB7oYO6aB-uPr8546sqdrxIGEvNkDxL2azMjwgxPNovIBfwO9U87vVo7KAk6zF6tJGfWVa/pub?gid=854262720&single=true&output=csv",
+"2013-2012 Lasarte-Oria":"https://docs.google.com/spreadsheets/d/e/2PACX-1vRk3A_LNtXB7oYO6aB-uPr8546sqdrxIGEvNkDxL2azMjwgxPNovIBfwO9U87vVo7KAk6zF6tJGfWVa/pub?gid=174360607&single=true&output=csv",
+"2011--> 18+ Lasarte-Oria":"https://docs.google.com/spreadsheets/d/e/2PACX-1vRk3A_LNtXB7oYO6aB-uPr8546sqdrxIGEvNkDxL2azMjwgxPNovIBfwO9U87vVo7KAk6zF6tJGfWVa/pub?gid=786890196&single=true&output=csv",
+"2017--> 18+ Andoain":"https://docs.google.com/spreadsheets/d/e/2PACX-1vRk3A_LNtXB7oYO6aB-uPr8546sqdrxIGEvNkDxL2azMjwgxPNovIBfwO9U87vVo7KAk6zF6tJGfWVa/pub?gid=641105268&single=true&output=csv",
+"Nat. Participación 1 día":"https://docs.google.com/spreadsheets/d/e/2PACX-1vRk3A_LNtXB7oYO6aB-uPr8546sqdrxIGEvNkDxL2azMjwgxPNovIBfwO9U87vVo7KAk6zF6tJGfWVa/pub?gid=541455715&single=true&output=csv",
+"Nat. Participación 2 días":"https://docs.google.com/spreadsheets/d/e/2PACX-1vRk3A_LNtXB7oYO6aB-uPr8546sqdrxIGEvNkDxL2azMjwgxPNovIBfwO9U87vVo7KAk6zF6tJGfWVa/pub?gid=2101736621&single=true&output=csv",
+"Master":"https://docs.google.com/spreadsheets/d/e/2PACX-1vRk3A_LNtXB7oYO6aB-uPr8546sqdrxIGEvNkDxL2azMjwgxPNovIBfwO9U87vVo7KAk6zF6tJGfWVa/pub?gid=2128438898&single=true&output=csv"
+};
+
+let sheets = {};
+const loadBtn = document.getElementById('loadBtn');
+const membersContainer = document.getElementById('membersContainer');
+const totalFamSelect = document.getElementById('totalFam');
+const summaryArea = document.getElementById('summaryArea');
+const resultsBox = document.getElementById('resultsBox');
+const totalBox = document.getElementById('totalBox');
+const useRGIcheckbox = document.getElementById('useRGI');
+
+// --------------------- CARGA DE CSV ---------------------
+loadBtn.addEventListener('click', async()=>{
+  loadBtn.disabled=true; loadBtn.textContent='Cargando...';
+  membersContainer.innerHTML=''; summaryArea.style.display='none'; sheets={};
+  try{
+    await Promise.all(Object.entries(csvSheets).map(async([name,url])=>{
+      const r = await fetch(url); if(!r.ok) throw new Error('Error al cargar '+name);
+      const text = await r.text();
+      sheets[name] = csvToObjects(text);
+    }));
+    createMemberBlocks();
+    summaryArea.style.display='block';
+    recalcAll();
+  }catch(e){ alert('Error cargando CSV: '+e.message);}
+  finally{loadBtn.disabled=false; loadBtn.textContent='Datos cargados';}
+});
+
+totalFamSelect.addEventListener('change',()=>{
+  createMemberBlocks();
+  recalcAll();
+});
+useRGIcheckbox.addEventListener('change', recalcAll);
+
+// --------------------- CREACIÓN DE BLOQUES ---------------------
+function createMemberBlocks(){
+  membersContainer.innerHTML=''; 
+  const count=Number(totalFamSelect.value);
+  for(let i=0;i<count;i++){
+    const div=document.createElement('div'); div.className='member';
+    // Usamos flexbox para que los tres divs internos compartan el espacio disponible
+    div.innerHTML=`<h3>Familiar ${i+1}</h3>
+    <div style="display: flex; gap: 5px; flex-wrap: wrap;"> 
+      <div style="flex: 1; min-width: 280px; align-self: flex-start;"> 
+        <label>Selecciona Grupo</label>
+        <select class="sheetSelect"></select>
+      </div>
+      <div style="flex: 1; min-width: 200px; align-self: flex-start;"> 
+        <label>Mes de inicio</label>
+        <select class="monthSelect"><option>—</option></select>
+      </div>
+     <div style="flex: 1; min-width: 250px; align-self: flex-start;"> 
+<label>Cuota aplicada</label>
+        <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;"> 
+          <div class="output feeDisplay" style="flex: 1;">—</div> 
+          <div class="altaCuota" style="white-space: nowrap;"></div> 
+          <div class="plazosCuota small" style="white-space: nowrap;"></div> 
+        </div>
+      </div>
+    <div class="explicacionCuota"></div>`;
+    membersContainer.appendChild(div);
+    const sheetSel = div.querySelector('.sheetSelect');
+    Object.keys(csvSheets).forEach(name=>{
+      const opt=document.createElement('option'); opt.value=name; opt.textContent=name; sheetSel.appendChild(opt);
+    });
+    sheetSel.addEventListener('change', ()=>{
+      populateMonthsForMember(div);
+      recalcAll();
+    });
+    div.querySelector('.monthSelect').addEventListener('change', recalcAll);
+  }
+  document.querySelectorAll('.member').forEach(m=>{
+    const s=m.querySelector('.sheetSelect');
+    if(s.options.length)s.selectedIndex=0;
+    populateMonthsForMember(m);
+  });
+}
+
+// --------------------- POBLAR MESES ---------------------
+function populateMonthsForMember(memberDiv){
+  const sheetSel = memberDiv.querySelector('.sheetSelect');
+  const monthSel = memberDiv.querySelector('.monthSelect');
+  monthSel.innerHTML = '';
+  const sheet = sheets[sheetSel.value];
+  if(!sheet){ 
+    monthSel.innerHTML='<option>—</option>'; 
+    return;
+  }
+  const months = sheet.map(r => r['Mes inicio']).filter(Boolean);
+  const seen = new Set();
+  const uniq = months.filter(m => (seen.has(m)?false:seen.add(m)));
+  if(uniq.length === 0){
+      monthSel.innerHTML='<option>—</option>';
+  } else {
+      uniq.forEach(m=>{
+          const o = document.createElement('option');
+          o.value = m;
+          o.textContent = m;
+          monthSel.appendChild(o);
+      });
+      monthSel.selectedIndex = 0;
+  }
+}
+
+// --------------------- PARSE CSV ---------------------
+function csvToObjects(csv){
+  const rows=[]; const lines=csv.split(/\r\n|\n/); 
+  if(lines.length<9) return rows;
+  const headers=parseCsvLine(lines[7]); // <-- Volvemos a usar la Línea 7
+  for(let i=8;i<lines.length;i++){  // <-- Volvemos a empezar la lectura en la Línea 8
+    if(!lines[i].trim()) continue;
+    const vals=parseCsvLine(lines[i]); 
+    const obj={};
+    for(let j=0;j<headers.length;j++) obj[headers[j].trim()]=vals[j]?vals[j].trim():''; 
+    rows.push(obj);
+  } 
+  return rows;
+}
+function parseCsvLine(line){
+  const result=[]; let inQuotes=false, val=''; 
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='\"') inQuotes=!inQuotes;
+    else if(ch===',' && !inQuotes){ result.push(val); val=''; }
+    else val+=ch;
+  }
+  result.push(val); return result;
+}
+
+// --------------------- CÁLCULO DE CUOTAS ---------------------
+function recalcAll(){
+  const members = document.querySelectorAll('.member');
+  const countFam = Number(totalFamSelect.value);
+  const useRGI = useRGIcheckbox.checked;
+  const fees = [];
+
+  members.forEach((m)=>{
+    const sheetName = m.querySelector('.sheetSelect').value;
+    const month = m.querySelector('.monthSelect').value;
+    const sheet = sheets[sheetName];
+    let fee = 0;
+    let row = null;
+
+    if(sheet && month && month !== '—'){
+      row = sheet.find(r => r['Mes inicio']?.trim() === month.trim());
+     if(row){
+        // 1. Obtenemos la cuota base de '1 familiar' (o el encabezado de la cuota completa)
+        fee = parseFloat((row['1 familiar']||'0').replace(',','.').replace('€','')) || 0;
+        
+        // 2. Si se usa RGI, aplicamos el descuento del 75% (pagar el 25%)
+        if (useRGI && fee > 0) {
+          fee = fee * 0.25; 
+        }
+      }
+    }
+
+    fees.push({div:m, fee, row});
+    m.classList.remove('free');
+  });
+
+  // Ajuste por número de familiares si NO RGI
+  if(!useRGI){
+    if(countFam === 2){
+      fees.forEach(f => {
+        if(f.row) f.fee = parseFloat((f.row['2 familiares']||f.fee).replace(',','.').replace('€','')) || f.fee;
+      });
+    } else if(countFam === 3){
+      const sorted = [...fees].sort((a,b)=>b.fee - a.fee);
+      if(sorted[0] && sorted[0].row) sorted[0].fee = parseFloat((sorted[0].row['2 familiares']||sorted[0].fee).replace(',','.').replace('€','')) || sorted[0].fee;
+      if(sorted[1] && sorted[1].row) sorted[1].fee = parseFloat((sorted[1].row['2 familiares']||sorted[1].fee).replace(',','.').replace('€','')) || sorted[1].fee;
+      if(sorted[2] && sorted[2].row) sorted[2].fee = parseFloat((sorted[2].row['Tercer familiar']||sorted[2].fee).replace(',','.').replace('€','')) || sorted[2].fee;
+    } else if(countFam >= 4){
+      const sorted = [...fees].sort((a,b)=>b.fee - a.fee);
+      if(sorted[0] && sorted[0].row) sorted[0].fee = parseFloat((sorted[0].row['2 familiares']||sorted[0].fee).replace(',','.').replace('€','')) || sorted[0].fee;
+      if(sorted[1] && sorted[1].row) sorted[1].fee = parseFloat((sorted[1].row['2 familiares']||sorted[1].fee).replace(',','.').replace('€','')) || sorted[1].fee;
+      if(sorted[2] && sorted[2].row) sorted[2].fee = parseFloat((sorted[2].row['Tercer familiar']||sorted[2].fee).replace(',','.').replace('€','')) || sorted[2].fee;
+      for(let i=3;i<sorted.length;i++) sorted[i].fee = 0;
+    }
+  }
+
+  // Cuota de alta
+  fees.forEach(f=>{
+    const monthSel = f.div.querySelector('.monthSelect');
+    const altaDiv = f.div.querySelector('.altaCuota');
+    const monthIndex = monthSel.selectedIndex;
+    const alta = (monthIndex >= 1) ? 28 : 0;
+    f.alta = alta;
+    altaDiv.innerHTML = alta ? '<span style="color:#387b5b;">Cuota de Alta: 28 € (Solamente una vez)</span>' : '';
+  });
+
+  // Mostrar cuota
+  fees.forEach(f=>{
+    const display = f.div.querySelector('.feeDisplay');
+    display.textContent = f.fee > 0 ? f.fee.toFixed(2)+' €' : '0 € (no paga)';
+  });
+
+ // Plazos
+  fees.forEach(f=>{
+    const monthSel = f.div.querySelector('.monthSelect');
+    const sheetName = f.div.querySelector('.sheetSelect').value; // Necesitamos el grupo para saber si es Master
+    const monthIndex = monthSel.selectedIndex;
+    const isMaster = sheetName.includes('Master');
+// ... (código anterior)
+
+    // Elemento donde mostraremos el texto condicional
+    const explainerDiv = f.div.querySelector('.explicacionCuota'); 
+    let explainerText = '';
+
+    // --------------------- Lógica de Explicación Condicional ---------------------
+    // Si el mes de inicio es el segundo o posterior (índice 1 o mayor):
+    if (monthIndex >= 1) {
+      // Definir los meses límite para la explicación
+      const ultimoPlazo = isMaster ? 'abril' : 'marzo';
+      const inicioAlta = isMaster ? '1 de noviembre de 2025' : '1 de octubre de 2025';
+      
+      explainerText = `
+        <p style="font-size: 0.85rem; color: #1e8449; margin-top: 5px; padding: 5px; border-left: 3px solid #1e8449; background-color: #f0fff0;">
+          **Ajuste de Cuota y Plazos:** Si alguien no comienza la temporada al principio, la cuota anual se adapta para que, junto con todos los demás, el último plazo sea en marzo (abril para el grupo Master). Se tienen en cuenta los meses que no se han realizado.
+          <br>
+          **Cuota de Alta:** Quienes comienzan a partir del 1 de octubre (1 de noviembre para el grupo Master) tienen una cuota de alta de 28 €. Quienes se inscriben antes de esa fecha NO pagan cuota de alta.
+        </p>
+      `;
+    }
+
+    explainerDiv.innerHTML = explainerText;
+    // --------------------- Fin Lógica de Explicación ---------------------
+
+  // ... (el resto del código de plazos, fees.push, etc.)
+    let plazoText = '';
+    let infoPopupText = ''; // Variable para el contenido del popup
+
+    if(monthIndex === 0) {
+      plazoText = '6 plazos domiciliados';
+      infoPopupText = isMaster 
+        ? 'Del 1 al 5 de {Noviembre, Diciembre, Enero, Febrero, Marzo y Abril}'
+        : 'Del 1 al 5 de {Octubre, Noviembre, Diciembre, Enero, Febrero y Marzo}';
+    } else if(monthIndex === 1) {
+      plazoText = '5 plazos domiciliados';
+      infoPopupText = isMaster
+        ? 'Del 1 al 5 de {Diciembre, Enero, Febrero, Marzo y Abril}'
+        : 'Del 1 al 5 de {Noviembre, Diciembre, Enero, Febrero y Marzo}';
+    } else if(monthIndex === 2) {
+      plazoText = '4 plazos domiciliados';
+      infoPopupText = isMaster
+        ? 'Del 1 al 5 de {Enero, Febrero, Marzo y Abril}'
+        : 'Del 1 al 5 de {Diciembre, Enero, Febrero y Marzo}';
+    } else if(monthIndex === 3) {
+      plazoText = '3 plazos domiciliados';
+      infoPopupText = isMaster
+        ? 'Del 1 al 5 de {Febrero, Marzo y Abril}'
+        : 'Del 1 al 5 de {Enero, Febrero y Marzo}';
+    } else if(monthIndex === 4) {
+      plazoText = '2 plazos domiciliados';
+      infoPopupText = isMaster
+        ? 'Del 1 al 5 de {Marzo y Abril}'
+        : 'Del 1 al 5 de {Febrero y Marzo}';
+    } else if(monthIndex === 5) {
+      plazoText = '1 plazo domiciliado';
+      infoPopupText = isMaster
+        ? 'Del 1 al 5 de {Abril}'
+        : 'Del 1 al 5 de {Marzo}';
+    } else {
+      plazoText = '1 pago por transferencia ABANCA ES75...'; // Usamos el texto de la cuota original
+      infoPopupText = 'En el momento de la inscripción. <br>Transferencia a la cuenta del club en ABANCA<br><b>ABANCA ES75 2080 3637 8130 4003 7051</b>';
+      
+      // Corregimos el texto de plazos para meses posteriores al sexto
+      const mesesTransferencia = monthIndex - 5; 
+      plazoText = `1 pago por transferencia `;
+    }
+    
+    // Generamos el enlace al popup para mostrar los detalles del cobro
+    const infoLink = `<span class="popupLink" data-info="📅 <b>Fecha de pago:</b><br>${infoPopupText}"><small>[info]</small></span>`;
+
+    f.div.querySelector('.plazosCuota').innerHTML = `${plazoText} ${infoLink}`;
+  });
+
+// Total
+  const totalMensual = fees.reduce((acc,f)=>acc + f.fee, 0); // Suma solo las cuotas mensuales (fee)
+  const totalAlta = fees.reduce((acc,f)=>acc + f.alta, 0); // Suma solo las cuotas de alta (alta: 28€ o 0€)
+  const totalPrimerPago = totalMensual + totalAlta; // Primer pago = Cuota Mensual + Cuota de Alta
+  const totalGeneral = totalMensual + totalAlta; // El total general sigue siendo la suma de todo
+
+  // Generamos el texto del detalle del primer pago condicionalmente
+  const primerPagoDetail = (totalAlta > 0) 
+    ? `(Cuota club + Cuota de Alta)` 
+    : `(Cuota club)`;
+
+  // Ajustamos el padding y margin-top para reducir el espacio vertical
+  totalBox.innerHTML = `
+    <div>Total General: ${totalGeneral.toFixed(2)} € (Incluye todas las cuotas de alta)</div>
+    
+    <div style="margin-top: 4px; padding: 2px 0; border-top: 1px solid #c0d0c0; line-height: 1.2;">
+      **Primer Pago:** ${totalPrimerPago.toFixed(2)} €
+      <span class="small" style="display: block; font-weight: normal; margin-top: 1px;">${primerPagoDetail}</span>
+    </div>
+    
+    <div style="padding: 2px 0; line-height: 1.2;">
+      **Pagos Posteriores:** ${totalMensual.toFixed(2)} €
+      <span class="small" style="display: block; font-weight: normal; margin-top: 1px;">(Cuota mensual por ${fees.length} familiares, sin cuota de alta)</span>
+    </div>
+  `;
+
+ // --------------------- RESUMEN ---------------------
+resultsBox.innerHTML = ''; // limpiar contenido previo
+fees.forEach((f, idx) => {
+  const sheetName = f.div.querySelector('.sheetSelect').value;
+  const month = f.div.querySelector('.monthSelect').value;
+
+  let cuotaText = f.fee > 0 ? f.fee.toFixed(2)+' €' : '0 € (no paga)';
+  let altaText = f.alta ? ' + Cuota de Alta: 28 € (Solamente una vez)' : '';
+
+  let monthIndex = f.div.querySelector('.monthSelect').selectedIndex;
+  let plazos = 1;
+  let formaPago = '';
+
+  if (monthIndex >= 0 && monthIndex <= 5) {
+    plazos = 6 - monthIndex;
+    formaPago = `<span class="popupLink" data-info='🏦↪️ <b>Cobro domiciliado:</b><br>Se realiza mediante domiciliación bancaria mensual.<br>El último plazo es del <b>1 al 5 de marzo</b> a excepción del grupo "<b>Masters</b>", cuyo último plazo es del <b>1 al 5 de abril</b><br><br><br>
+<b>Plazos de domiciliación:</b><br>
+Durante la temporada 2025/2026, los plazos quedarán de la siguiente manera:<br>
+1ª domiciliación: del 1 al 5 de octubre. <b>(Masters NO)</b><br>
+2ª domiciliación: del 1 al 5 de noviembre.(1ª Masters)<br>
+3ª domiciliación: del 1 al 5 de diciembre.(2ª Masters)<br>
+4ª domiciliación: del 1 al 5 de enero.(3ª Masters)<br>
+5ª domiciliación: del 1 al 5 de febrero.(4ª Masters)<br>
+6ª domiciliación: del 1 al 5 de marzo.(5ª Masters)<br>
+7ª domiciliación: del 1 al 5 de marzo.(<b>SOLO Masters, 6ª</b>).'>Cobro domiciliado</span>`;
+  } else {
+    formaPago = `<span class="popupLink" data-info='🏦➡️ <b>Transferencia bancaria:</b><br>La persona que se inscribe realiza un único pago a la cuenta ABANCA proporcionada:<br><b>ABANCA ES75 2080 3637 8130 4003 7051</b>.'>Transferencia bancaria ABANCA ES75 2080 3637 8130 4003 7051</span>`;
+  }
+
+  const div = document.createElement('div');
+  div.className = 'resumenLine';
+  div.innerHTML = `Familiar ${idx+1}: ${sheetName} | ${month} | ${cuotaText}${altaText} | Plazos: ${plazos} (${formaPago})`;
+  resultsBox.appendChild(div);
+});
+
+// --------------------- POPUPS MODERNOS ---------------------
+document.querySelectorAll('.popupLink').forEach(el=>{
+  el.addEventListener('click', e=>{
+    e.preventDefault();
+
+    const infoText = el.dataset.info;
+    // Crear fondo oscuro
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '9999';
+    overlay.style.padding = '10px';
+
+    // Crear ventana del popup
+    const popup = document.createElement('div');
+    popup.style.background = '#fff';
+    popup.style.fontFamily = "'Roboto', Arial, sans-serif";
+    popup.style.padding = '22px 26px';
+    popup.style.borderRadius = '12px';
+    popup.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
+    popup.style.maxWidth = '420px';
+    popup.style.textAlign = 'left';
+    popup.style.fontSize = '0.95rem';
+    popup.style.lineHeight = '1.5em';
+    popup.style.color = '#333';
+    popup.innerHTML = `
+      <h3 style="margin-top:0; color:#387b5b; font-size:1.1rem;">Información</h3>
+      <p style="margin-bottom:0.8em;">${infoText}</p>
+      <div style="text-align:right; margin-top:12px;">
+        <button id="closePopup" style="padding:6px 14px; border:none; border-radius:6px; background:#387b5b; color:white; cursor:pointer;">Cerrar</button>
+      </div>
+    `;
+
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+
+    document.getElementById('closePopup').addEventListener('click', ()=>{
+      overlay.remove();
+    });
+    overlay.addEventListener('click', e=>{
+      if(e.target === overlay) overlay.remove();
+    });
+  });
+});
+// --------------------- POPUP RGI / IMV AL MARCAR CHECKBOX ---------------------
+const rgiCheckbox = document.getElementById('rgiCheck');
+if (rgiCheckbox) {
+  rgiCheckbox.addEventListener('change', () => {
+    if (rgiCheckbox.checked) {
+      const infoText = `
+      💶 <b>Ayuda RGI / IMV</b><br><br>
+      Descuento del <b>75%</b> en la cuota.<br>
+      Si seleccionas este descuento, deberás presentar justificante de haber cobrado la ayuda <b>antes del día 25 de cada mes</b><br>Al seleccionar Ayuda RGI / IMV, descuento del 75% no se aplican los descuentos por familiares.
+      `;
+
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = '9999';
+      overlay.style.padding = '10px';
+
+      const popup = document.createElement('div');
+      popup.style.background = '#fff';
+      popup.style.fontFamily = "'Roboto', Arial, sans-serif";
+      popup.style.padding = '22px 26px';
+      popup.style.borderRadius = '12px';
+      popup.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
+      popup.style.maxWidth = '420px';
+      popup.style.textAlign = 'left';
+      popup.style.fontSize = '0.95rem';
+      popup.style.lineHeight = '1.5em';
+      popup.style.color = '#333';
+      popup.innerHTML = `
+        <h3 style="margin-top:0; color:#387b5b; font-size:1.1rem;">Información descuento RGI / IMV</h3>
+        <p style="margin-bottom:0.8em;">${infoText}</p>
+        <div style="text-align:right; margin-top:12px;">
+          <button id="closePopup" style="padding:6px 14px; border:none; border-radius:6px; background:#387b5b; color:white; cursor:pointer;">Cerrar</button>
+        </div>
+      `;
+
+      overlay.appendChild(popup);
+      document.body.appendChild(overlay);
+
+      document.getElementById('closeRgiPopup').addEventListener('click', () => {
+        overlay.remove();
+      });
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) overlay.remove();
+      });
+    }
+  });
+}
+}
+// --------------------- POPUP RGI / IMV AL MARCAR CHECKBOX ---------------------
+const rgiCheckbox = document.querySelector('#useRGI');
+if (rgiCheckbox) {
+  rgiCheckbox.addEventListener('change', () => {
+    if (rgiCheckbox.checked) {
+      const infoText = `
+      ℹ️ <b>Ayuda RGI / IMV</b><br><br>
+      Descuento del <b>75%</b> en la cuota.<br>
+      Si seleccionas este descuento, deberás presentar justificante de haber cobrado la ayuda <b>antes del día 25 de cada mes</b><br><br>Al seleccionar Ayuda RGI / IMV, descuento del 75% no se aplican los descuentos por familiares.
+      `;
+
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = '9999';
+      overlay.style.padding = '10px';
+
+      const popup = document.createElement('div');
+      popup.style.background = '#fff';
+      popup.style.fontFamily = "'Roboto', Arial, sans-serif";
+      popup.style.padding = '22px 26px';
+      popup.style.borderRadius = '12px';
+      popup.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
+      popup.style.maxWidth = '420px';
+      popup.style.textAlign = 'left';
+      popup.style.fontSize = '0.95rem';
+      popup.style.lineHeight = '1.5em';
+      popup.style.color = '#333';
+      popup.innerHTML = `
+        <h3 style="margin-top:0; color:#387b5b; font-size:1.1rem;">Información descuento RGI / IMV</h3>
+        <p style="margin-bottom:0.8em;">${infoText}</p>
+        <div style="text-align:right; margin-top:12px;">
+          <button id="closeRgiPopup" style="padding:6px 14px; border:none; border-radius:6px; background:#387b5b; color:white; cursor:pointer;">Cerrar</button>
+        </div>
+      `;
+
+      overlay.appendChild(popup);
+      document.body.appendChild(overlay);
+
+      document.getElementById('closeRgiPopup').addEventListener('click', () => {
+        overlay.remove();
+      });
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) overlay.remove();
+      });
+    }
+  });
+}
+
+</script>
+<div id="popupOverlay" class="popupOverlay">
+  <div class="popupBox">
+    <span id="popupClose" class="popupClose">&times;</span>
+    <h3 id="popupTitle">Información</h3>
+    <div id="popupContent"></div>
+  </div>
+</div>
 
 </body>
 </html>
-
 
 
 
