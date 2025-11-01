@@ -6,62 +6,192 @@
 <title>Calculadora de Cuotas del Club</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-body { font-family: 'Roboto', Arial, sans-serif; background:#f5f7fb; color:#111; padding:20px; }
-.card { background:#fff; border-radius:10px; padding:18px; box-shadow:0 6px 18px rgba(0,0,0,.06); width:95%; max-width:1000px; margin:0 auto; }
-h1{margin:0 0 14px}
-.row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
-label { font-weight:600; font-size:.95rem; margin-bottom:6px; display:block; }
-select, .output { padding:8px 10px; border-radius:8px; border:1px solid #d0d7e0; font-size:1rem; }
-.member { border:1px dashed #e0e6ef; padding:10px; border-radius:8px; margin-bottom:5px; background:#fbfdff; transition: background 0.3s; }
-.member h3 { margin:0 0 8px; font-size:1rem; }
-.member.free { background:#fff3e0; }
-.results { margin-top:12px; padding:10px; border-radius:8px; background:#f0f6ff; font-weight:700; width: 100%; box-sizing: border-box; }
-.small { font-size:.9rem; color:#555; }
-.inline { display:flex; gap:10px; align-items:center; }
-.total { margin-top:12px; padding:12px; border-radius:8px; background:#e8f6ea; font-weight:800; font-size:1.05rem; width: 100%; box-sizing: border-box; }
-button { padding:8px 12px; border-radius:8px; border:0; background:#387b5b; color:#fff; cursor:pointer; }
-button:disabled { background:#d5e4d9; cursor:not-allowed; }
-.member .altaCuota { margin-top:4px; font-weight:600; color:#1f6feb; font-size:0.85rem; }
-.member .plazosCuota { margin-top:2px; color:#555; font-size:.85rem; }
-.total-claro { display:block; font-size:0.9em; color:#333; background-color:#f8f9fa; border:1px solid #ddd; padding:6px 10px; margin-top:10px; border-radius:6px; line-height:1.4em; text-align:right; width:fit-content; margin-left:auto; }
-.total-claro span.small { font-size:0.8em; color:#007bff; text-decoration:underline; cursor:pointer; }
-.popupLink { color:#007bff; text-decoration:underline; cursor:pointer; }
-.resumenLine { font-size:0.85em; margin-bottom:2px; }
-.popupOverlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.4);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-.popupBox {
-  background: #fff;
-  border-radius: 10px;
-  max-width: 420px;
-  padding: 20px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-  text-align: left;
-  font-size: 0.9rem;
-}
-.popupBox h3 {
-  margin-top: 0;
-  font-size: 1.1rem;
-  color: #387b5b;
-}
-.popupClose {
-  float: right;
-  font-weight: bold;
-  cursor: pointer;
-  color: #387b5b;
-}
-.popupClose:hover {
-  color: #333;
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  background:#f5f7fb;
+  color:#111;
+  padding:10px;
 }
 
+.card {
+  background:#fff;
+  border-radius:10px;
+  padding:14px 16px;
+  box-shadow:0 4px 10px rgba(0,0,0,.05);
+  width:95%;
+  max-width:950px;
+  margin:0 auto;
+}
+
+h1 {
+  margin:0 0 10px;
+  font-size:1.4rem;
+}
+
+#infoContext {
+  margin-bottom:14px;
+  padding:10px 12px;
+  background:#fdf3f3;
+  border:1px solid #f9dcdc;
+  border-radius:8px;
+  font-size:0.9rem;
+  line-height:1.35;
+}
+#infoContext p { margin:4px 0; }
+#infoContext p:first-child { margin-top:0; }
+#infoContext p:last-child { margin-bottom:0; }
+
+.row {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 12px;
+  align-items:flex-end;
+  margin-bottom:8px;
+}
+
+label {
+  font-weight:600;
+  font-size:0.9rem;
+  display:block;
+  margin-bottom:2px;
+}
+
+select, .output {
+  padding:6px 8px;
+  border-radius:6px;
+  border:1px solid #ccd3dd;
+  font-size:0.9rem;
+  width:100%;
+  box-sizing:border-box;
+}
+
+button {
+  padding:6px 10px;
+  border-radius:6px;
+  border:0;
+  background:#387b5b;
+  color:#fff;
+  font-size:0.9rem;
+  cursor:pointer;
+}
+button:disabled {
+  background:#d5e4d9;
+  cursor:not-allowed;
+}
+
+.member {
+  border:1px dashed #dce2ea;
+  padding:8px 10px;
+  border-radius:8px;
+  margin-bottom:6px;
+  background:#fbfdff;
+}
+.member h3 {
+  margin:0 0 6px;
+  font-size:0.95rem;
+}
+.member.free {
+  background:#fff3e0;
+}
+.member .altaCuota {
+  font-weight:600;
+  color:#1f6feb;
+  font-size:0.8rem;
+}
+.member .plazosCuota {
+  color:#555;
+  font-size:0.8rem;
+  margin-top:2px;
+}
+
+.results, .total {
+  margin-top:10px;
+  padding:8px 10px;
+  border-radius:6px;
+  font-weight:700;
+  font-size:0.9rem;
+  width:100%;
+  box-sizing:border-box;
+}
+.results {
+  background:#f0f6ff;
+}
+.total {
+  background:#e8f6ea;
+}
+
+.small {
+  font-size:0.8rem;
+  color:#555;
+}
+
+.inline {
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.total-claro {
+  font-size:0.85em;
+  color:#333;
+  background-color:#f8f9fa;
+  border:1px solid #ddd;
+  padding:4px 8px;
+  margin-top:8px;
+  border-radius:5px;
+  text-align:right;
+  width:fit-content;
+  margin-left:auto;
+}
+
+.popupLink {
+  color:#007bff;
+  text-decoration:underline;
+  cursor:pointer;
+  font-size:0.85rem;
+}
+
+.resumenLine {
+  font-size:0.8rem;
+  margin-bottom:2px;
+  line-height:1.2;
+}
+
+/* Popups */
+.popupOverlay {
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+.popupBox {
+  background:#fff;
+  border-radius:8px;
+  max-width:380px;
+  padding:14px 18px;
+  box-shadow:0 4px 14px rgba(0,0,0,0.25);
+  text-align:left;
+  font-size:0.9rem;
+  line-height:1.4;
+}
+.popupBox h3 {
+  margin:0 0 6px;
+  font-size:1rem;
+  color:#387b5b;
+}
+.popupClose {
+  float:right;
+  font-weight:bold;
+  cursor:pointer;
+  color:#387b5b;
+}
+.popupClose:hover {
+  color:#333;
+}
 </style>
+
 </head>
 <body>
 <div class="card">
@@ -174,28 +304,23 @@ function createMemberBlocks(){
     // Usamos flexbox para que los tres divs internos compartan el espacio disponible
     div.innerHTML=`<h3>Familiar ${i+1}</h3>
     <div style="display: flex; gap: 5px; flex-wrap: wrap;"> 
-      
       <div style="flex: 1; min-width: 280px; align-self: flex-start;"> 
         <label>Selecciona Grupo</label>
         <select class="sheetSelect"></select>
       </div>
-      
       <div style="flex: 1; min-width: 200px; align-self: flex-start;"> 
         <label>Mes de inicio</label>
         <select class="monthSelect"><option>—</option></select>
       </div>
-      
-     <div style="flex: 1; min-width: 250px; align-self: flex-start;">
-        
-    <label>Cuota aplicada</label>
+     <div style="flex: 1; min-width: 250px; align-self: flex-start;"> 
+<label>Cuota aplicada</label>
         <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;"> 
           <div class="output feeDisplay" style="flex: 1;">—</div> 
           <div class="altaCuota" style="white-space: nowrap;"></div> 
           <div class="plazosCuota small" style="white-space: nowrap;"></div> 
         </div>
       </div>
-    <div class="explicacionCuota"></div>
-    `;
+    <div class="explicacionCuota"></div>`;
     membersContainer.appendChild(div);
     const sheetSel = div.querySelector('.sheetSelect');
     Object.keys(csvSheets).forEach(name=>{
@@ -368,46 +493,46 @@ function recalcAll(){
     let infoPopupText = ''; // Variable para el contenido del popup
 
     if(monthIndex === 0) {
-      plazoText = '6 plazos domiciliación';
+      plazoText = '6 plazos domiciliados';
       infoPopupText = isMaster 
         ? 'Del 1 al 5 de {Noviembre, Diciembre, Enero, Febrero, Marzo y Abril}'
         : 'Del 1 al 5 de {Octubre, Noviembre, Diciembre, Enero, Febrero y Marzo}';
     } else if(monthIndex === 1) {
-      plazoText = '5 plazos domiciliación';
+      plazoText = '5 plazos domiciliados';
       infoPopupText = isMaster
         ? 'Del 1 al 5 de {Diciembre, Enero, Febrero, Marzo y Abril}'
         : 'Del 1 al 5 de {Noviembre, Diciembre, Enero, Febrero y Marzo}';
     } else if(monthIndex === 2) {
-      plazoText = '4 plazos domiciliación';
+      plazoText = '4 plazos domiciliados';
       infoPopupText = isMaster
         ? 'Del 1 al 5 de {Enero, Febrero, Marzo y Abril}'
         : 'Del 1 al 5 de {Diciembre, Enero, Febrero y Marzo}';
     } else if(monthIndex === 3) {
-      plazoText = '3 plazos domiciliación';
+      plazoText = '3 plazos domiciliados';
       infoPopupText = isMaster
         ? 'Del 1 al 5 de {Febrero, Marzo y Abril}'
         : 'Del 1 al 5 de {Enero, Febrero y Marzo}';
     } else if(monthIndex === 4) {
-      plazoText = '2 plazos domiciliación';
+      plazoText = '2 plazos domiciliados';
       infoPopupText = isMaster
         ? 'Del 1 al 5 de {Marzo y Abril}'
         : 'Del 1 al 5 de {Febrero y Marzo}';
     } else if(monthIndex === 5) {
-      plazoText = '1 plazo domiciliación';
+      plazoText = '1 plazo domiciliado';
       infoPopupText = isMaster
         ? 'Del 1 al 5 de {Abril}'
         : 'Del 1 al 5 de {Marzo}';
     } else {
       plazoText = '1 pago por transferencia ABANCA ES75...'; // Usamos el texto de la cuota original
-      infoPopupText = 'En el momento de la inscripción';
+      infoPopupText = 'En el momento de la inscripción. <br>Transferencia a la cuenta del club en ABANCA<br><b>ABANCA ES75 2080 3637 8130 4003 7051</b>';
       
       // Corregimos el texto de plazos para meses posteriores al sexto
       const mesesTransferencia = monthIndex - 5; 
-      plazoText = `1 pago por transferencia (${mesesTransferencia}º mes desde el inicio de temporada)`;
+      plazoText = `1 pago por transferencia `;
     }
     
     // Generamos el enlace al popup para mostrar los detalles del cobro
-    const infoLink = `<span class="popupLink" data-info="📅 <b>Fechas de Domiciliación:</b><br>${infoPopupText}"><small>[info]</small></span>`;
+    const infoLink = `<span class="popupLink" data-info="📅 <b>Fecha de pago:</b><br>${infoPopupText}"><small>[info]</small></span>`;
 
     f.div.querySelector('.plazosCuota').innerHTML = `${plazoText} ${infoLink}`;
   });
