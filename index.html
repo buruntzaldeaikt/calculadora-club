@@ -7,18 +7,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 body { font-family: 'Roboto', Arial, sans-serif; background:#f5f7fb; color:#111; padding:20px; }
-.card { background:#fff; border-radius:10px; padding:18px; box-shadow:0 6px 18px rgba(0,0,0,.06); width:95%; max-width:800px; margin:0 auto; }
+.card { background:#fff; border-radius:10px; padding:18px; box-shadow:0 6px 18px rgba(0,0,0,.06); width:95%; max-width:1000px; margin:0 auto; }
 h1{margin:0 0 14px}
 .row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
 label { font-weight:600; font-size:.95rem; margin-bottom:6px; display:block; }
 select, .output { padding:8px 10px; border-radius:8px; border:1px solid #d0d7e0; font-size:1rem; }
-.member { border:1px dashed #e0e6ef; padding:12px; border-radius:8px; margin-bottom:10px; background:#fbfdff; transition: background 0.3s; }
+.member { border:1px dashed #e0e6ef; padding:10px; border-radius:8px; margin-bottom:5px; background:#fbfdff; transition: background 0.3s; }
 .member h3 { margin:0 0 8px; font-size:1rem; }
 .member.free { background:#fff3e0; }
-.results { margin-top:12px; padding:10px; border-radius:8px; background:#f0f6ff; font-weight:700; }
+.results { margin-top:12px; padding:10px; border-radius:8px; background:#f0f6ff; font-weight:700; width: 100%; box-sizing: border-box; }
 .small { font-size:.9rem; color:#555; }
 .inline { display:flex; gap:10px; align-items:center; }
-.total { margin-top:12px; padding:12px; border-radius:8px; background:#e8f6ea; font-weight:800; font-size:1.05rem; }
+.total { margin-top:12px; padding:12px; border-radius:8px; background:#e8f6ea; font-weight:800; font-size:1.05rem; width: 100%; box-sizing: border-box; }
 button { padding:8px 12px; border-radius:8px; border:0; background:#387b5b; color:#fff; cursor:pointer; }
 button:disabled { background:#d5e4d9; cursor:not-allowed; }
 .member .altaCuota { margin-top:4px; font-weight:600; color:#1f6feb; font-size:0.85rem; }
@@ -66,7 +66,7 @@ button:disabled { background:#d5e4d9; cursor:not-allowed; }
 <body>
 <div class="card">
         <h1>Calculadora de cuotas del club</h1>
-            <div id="infoContext" style="margin-bottom: 20px; padding: 15px; background: #fdf3f3; border: 1px solid #f9dcdc; border-radius: 8px; font-size: 0.95rem; line-height: 1.5; **max-width: none;**">
+            <div id="infoContext" style="margin-bottom: 20px; padding: 15px; background: #fdf3f3; border: 1px solid #f9dcdc; border-radius: 8px; font-size: 0.95rem; line-height: 1.5;">
             <p style="margin-top: 0; font-weight: bold; color: #b03a3a;">
                 Cuota anual aprobada en Asamblea General del 22 de febrero de 2025
             </p>
@@ -106,16 +106,16 @@ button:disabled { background:#d5e4d9; cursor:not-allowed; }
     </select>
   </div>
   <div style="width:160px; align-self:flex-end">
-    <button id="loadBtn">Cargar CSV</button>
+    <button id="loadBtn">Pulsa para cargar datos y empezar</button>
   </div>
 </div>
 
 <div id="membersContainer"></div>
 
-<div id="summaryArea" style="display:none">
-  <div class="results"><strong>Resumen</strong><br></div>
-  <div class="results" id="resultsBox"></div>
-  <div class="total" id="totalBox">Total: —</div>
+<div id="summaryArea" style="display:none; width: 100%;">
+  <div class="results"><strong>Resumen</strong><br></div>
+  <div class="results" id="resultsBox"></div>
+  <div class="total" id="totalBox">Total: —</div>
 </div>
 </div>
 
@@ -156,7 +156,7 @@ loadBtn.addEventListener('click', async()=>{
     summaryArea.style.display='block';
     recalcAll();
   }catch(e){ alert('Error cargando CSV: '+e.message);}
-  finally{loadBtn.disabled=false; loadBtn.textContent='Cargar CSV';}
+  finally{loadBtn.disabled=false; loadBtn.textContent='Datos cargados';}
 });
 
 totalFamSelect.addEventListener('change',()=>{
@@ -173,25 +173,27 @@ function createMemberBlocks(){
     const div=document.createElement('div'); div.className='member';
     // Usamos flexbox para que los tres divs internos compartan el espacio disponible
     div.innerHTML=`<h3>Familiar ${i+1}</h3>
-    <div style="display: flex; gap: 20px; flex-wrap: wrap;"> 
+    <div style="display: flex; gap: 5px; flex-wrap: wrap;"> 
       
-      <div style="flex: 1; min-width: 280px;"> 
+      <div style="flex: 1; min-width: 280px; align-self: flex-start;"> 
         <label>Selecciona Grupo</label>
         <select class="sheetSelect"></select>
       </div>
       
-      <div style="flex: 1; min-width: 200px;"> 
+      <div style="flex: 1; min-width: 200px; align-self: flex-start;"> 
         <label>Mes de inicio</label>
         <select class="monthSelect"><option>—</option></select>
       </div>
       
-      <div style="flex: 1; min-width: 250px;"> 
-        <label>Cuota aplicada</label>
-        <div class="output feeDisplay">—</div>
-        <div class="altaCuota"></div>
-        <div class="plazosCuota small"></div>
+     <div style="flex: 1; min-width: 250px; align-self: flex-start;">
+        
+    <label>Cuota aplicada</label>
+        <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;"> 
+          <div class="output feeDisplay" style="flex: 1;">—</div> 
+          <div class="altaCuota" style="white-space: nowrap;"></div> 
+          <div class="plazosCuota small" style="white-space: nowrap;"></div> 
+        </div>
       </div>
-    </div>
     <div class="explicacionCuota"></div>
     `;
     membersContainer.appendChild(div);
@@ -425,12 +427,12 @@ function recalcAll(){
   totalBox.innerHTML = `
     <div>Total General: ${totalGeneral.toFixed(2)} € (Incluye todas las cuotas de alta)</div>
     
-    <div style="margin-top: 6px; padding: 4px 0; border-top: 1px solid #c0d0c0; line-height: 1.2;">
+    <div style="margin-top: 4px; padding: 2px 0; border-top: 1px solid #c0d0c0; line-height: 1.2;">
       **Primer Pago:** ${totalPrimerPago.toFixed(2)} €
       <span class="small" style="display: block; font-weight: normal; margin-top: 1px;">${primerPagoDetail}</span>
     </div>
-    
-    <div style="padding: 4px 0; line-height: 1.2;">
+    
+    <div style="padding: 2px 0; line-height: 1.2;">
       **Pagos Posteriores:** ${totalMensual.toFixed(2)} €
       <span class="small" style="display: block; font-weight: normal; margin-top: 1px;">(Cuota mensual por ${fees.length} familiares, sin cuota de alta)</span>
     </div>
