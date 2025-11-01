@@ -519,33 +519,54 @@ f.plazosRestantes = plazos;
   });
 
 // Total Anual
-// Totales actualizados
-const totalPrimerPago = fees.reduce((acc,f)=>acc + f.fee + f.alta, 0);
-const totalAnual = fees.reduce((acc,f)=>acc + f.fee * f.plazosRestantes + f.alta, 0);
-const totalPagosPosteriores = totalAnual - totalPrimerPago;
+    const totalCuotasAnuales = fees.reduce((acc,f)=>acc + f.fee * f.plazosRestantes, 0); // Suma TOTAL de cuotas anuales (sin altas)
+    const totalAltas = fees.reduce((acc,f)=>acc + f.alta, 0); // Suma TOTAL de altas
+    const totalAnual = totalCuotasAnuales + totalAltas; // Total Anual completo
 
-// Generamos el detalle del primer pago
-const primerPagoDetail = (fees.some(f => f.alta > 0)) 
-  ? `(Cuota club + Cuota de Alta)` 
-  : `(Cuota club)`;
+    const totalPrimerPago = fees.reduce((acc,f)=>acc + f.fee + f.alta, 0); // Primer pago: (1 cuota + alta)
 
-// Mostrar en caja
-totalBox.innerHTML = `
-<div style="background:#fff; border-radius:10px; padding:10px 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-weight:700; margin-bottom:8px;">
-  Total Anual: ${totalAnual.toFixed(2)} € (Incluye todas las cuotas de alta y meses restantes)
-</div>
+    // ⬇️ NUEVA LÓGICA PARA EL MONTO Y FORMATO DE PAGOS POSTERIORES
+    
+    // 1. Calcular cuántos plazos quedan después del primero (si son más de 1).
+    const numPagosPosteriores = fees.reduce((acc, f) => acc + (f.plazosRestantes > 1 ? f.plazosRestantes - 1 : 0), 0);
 
-<div style="display: flex; gap: 20px; border-top: 1px solid #c0d0c0; padding-top: 4px; flex-wrap: wrap;">
-  <div>
-    <strong>Primer Pago:</strong> ${totalPrimerPago.toFixed(2)} €
-    <div class="small" style="font-weight: normal;">${primerPagoDetail}</div>
-  </div>
-  <div>
-    <strong>Pagos Posteriores:</strong> ${totalPagosPosteriores.toFixed(2)} €
-    <div class="small" style="font-weight: normal;">(Suma de los plazos restantes sin cuota de alta)</div>
-  </div>
-</div>
-`;
+    // 2. Calcular la suma total de dinero a pagar en esos plazos posteriores (sin alta).
+    const montoTotalPagosPosteriores = totalCuotasAnuales - fees.reduce((acc,f)=>acc + f.fee, 0); 
+    
+    // 3. Calcular el monto de CADA pago posterior.
+    let pagoPosteriorPorCuota = 0;
+    if (numPagosPosteriores > 0) {
+      pagoPosteriorPorCuota = montoTotalPagosPosteriores / numPagosPosteriores;
+    }
+
+    // 4. Generar el texto formateado (ej: "5 x 30.50 €")
+    let pagosPosterioresTexto = '';
+    if (numPagosPosteriores > 0) {
+      pagosPosterioresTexto = `${numPagosPosteriores} x ${pagoPosteriorPorCuota.toFixed(2)} €`;
+    } else {
+      pagosPosterioresTexto = '0.00 €';
+    }
+    const descripcionPagos = numPagosPosteriores > 0 ? `(Suma de ${numPagosPosteriores} plazos)` : `(No quedan plazos)`;
+
+
+    const primerPagoDetail = fees.some(f => f.alta > 0) ? `(Cuota club + Cuota de Alta)` : `(Cuota club)`;
+
+    totalBox.innerHTML = `
+      <div style="background:#fff; border-radius:10px; padding:10px 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-weight:700; margin-bottom:8px;">
+        Total Anual: ${totalAnual.toFixed(2)} € (Incluye todas las cuotas de alta y meses restantes)
+      </div>
+
+      <div style="display: flex; gap: 20px; border-top: 1px solid #c0d0c0; padding-top: 4px; flex-wrap: wrap;">
+        <div>
+          <strong>Primer Pago:</strong> ${totalPrimerPago.toFixed(2)} €
+          <div class="small" style="font-weight: normal;">${primerPagoDetail}</div>
+        </div>
+        <div>
+          <strong>Pagos Posteriores:</strong> ${pagosPosterioresTexto}
+          <div class="small" style="font-weight: normal;">${descripcionPagos}</div>
+        </div>
+      </div>
+    `;
 
 
 
