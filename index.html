@@ -526,18 +526,23 @@ function recalcAll(){
 
   // Ajustamos el padding y margin-top para reducir el espacio vertical
   totalBox.innerHTML = `
-    <div>Total General: ${totalGeneral.toFixed(2)} € (Incluye todas las cuotas de alta)</div>
-    
-    <div style="margin-top: 4px; padding: 2px 0; border-top: 1px solid #c0d0c0; line-height: 1.2;">
-      **Primer Pago:** ${totalPrimerPago.toFixed(2)} €
-      <span class="small" style="display: block; font-weight: normal; margin-top: 1px;">${primerPagoDetail}</span>
-    </div>
-    
-    <div style="padding: 2px 0; line-height: 1.2;">
-      **Pagos Posteriores:** ${totalMensual.toFixed(2)} €
-      <span class="small" style="display: block; font-weight: normal; margin-top: 1px;">(Cuota mensual por ${fees.length} familiares, sin cuota de alta)</span>
-    </div>
-  `;
+  <div style="background:#fff; border-radius:10px; padding:10px 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-weight:700; margin-bottom:8px;">
+    Total General: ${totalGeneral.toFixed(2)} € (Incluye todas las cuotas de alta)
+  </div>
+
+  <div style="display: flex; gap: 20px; border-top: 1px solid #c0d0c0; padding-top: 4px; flex-wrap: wrap;">
+    <div>
+      <strong>Primer Pago:</strong> ${totalPrimerPago.toFixed(2)} €
+      <div class="small" style="font-weight: normal;">${primerPagoDetail}</div>
+    </div>
+    <div>
+      <strong>Pagos Posteriores:</strong> ${totalMensual.toFixed(2)} €
+      <div class="small" style="font-weight: normal;">(Cuota mensual por ${fees.length} familiares, sin cuota de alta)</div>
+    </div>
+  </div>
+`;
+
+
 
  // --------------------- RESUMEN ---------------------
 resultsBox.innerHTML = ''; // limpiar contenido previo
