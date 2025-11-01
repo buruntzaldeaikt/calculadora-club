@@ -454,7 +454,7 @@ function recalcAll(){
       
       explainerText = `
         <p style="font-size: 0.85rem; color: #1e8449; margin-top: 5px; padding: 5px; border-left: 3px solid #1e8449; background-color: #f0fff0;">
-          **Ajuste de Cuota y Plazos:** Si alguien no comienza la temporada al principio, la cuota anual se adapta para que, junto con todos los demás, el último plazo sea en marzo (abril para el grupo Master). Se tienen en cuenta los meses que no se han realizado.
+          *Ajuste de Cuota y Plazos:* Si alguien no comienza la temporada al principio, la cuota anual se adapta para que, junto con todos los demás, el último plazo sea en marzo (abril para el grupo Master). Se tienen en cuenta los meses que no se han realizado.
           <br>
           **Cuota de Alta:** Quienes comienzan a partir del 1 de octubre (1 de noviembre para el grupo Master) tienen una cuota de alta de 28 €. Quienes se inscriben antes de esa fecha NO pagan cuota de alta.
         </p>
@@ -506,6 +506,11 @@ function recalcAll(){
       const mesesTransferencia = monthIndex - 5; 
       plazoText = `1 pago por transferencia `;
     }
+// --------------------- CALCULAR PLAZOS RESTANTES ---------------------
+let plazos = 6 - monthIndex; // por defecto 6 plazos si es inicio octubre/noviembre
+if(plazos < 1) plazos = 1;   // mínimo 1 pago
+f.plazosRestantes = plazos;
+
     
     // Generamos el enlace al popup para mostrar los detalles del cobro
     const infoLink = `<span class="popupLink" data-info="📅 <b>Fecha de pago:</b><br>${infoPopupText}"><small>[info]</small></span>`;
@@ -513,34 +518,35 @@ function recalcAll(){
     f.div.querySelector('.plazosCuota').innerHTML = `${plazoText} ${infoLink}`;
   });
 
-// Total
-  const totalMensual = fees.reduce((acc,f)=>acc + f.fee, 0); // Suma solo las cuotas mensuales (fee)
-  const totalAlta = fees.reduce((acc,f)=>acc + f.alta, 0); // Suma solo las cuotas de alta (alta: 28€ o 0€)
-  const totalPrimerPago = totalMensual + totalAlta; // Primer pago = Cuota Mensual + Cuota de Alta
-  const totalGeneral = totalMensual + totalAlta; // El total general sigue siendo la suma de todo
+// Total Anual
+// Totales actualizados
+const totalPrimerPago = fees.reduce((acc,f)=>acc + f.fee + f.alta, 0);
+const totalAnual = fees.reduce((acc,f)=>acc + f.fee * f.plazosRestantes + f.alta, 0);
+const totalPagosPosteriores = totalAnual - totalPrimerPago;
 
-  // Generamos el texto del detalle del primer pago condicionalmente
-  const primerPagoDetail = (totalAlta > 0) 
-    ? `(Cuota club + Cuota de Alta)` 
-    : `(Cuota club)`;
+// Generamos el detalle del primer pago
+const primerPagoDetail = (fees.some(f => f.alta > 0)) 
+  ? `(Cuota club + Cuota de Alta)` 
+  : `(Cuota club)`;
 
-  // Ajustamos el padding y margin-top para reducir el espacio vertical
-  totalBox.innerHTML = `
-  <div style="background:#fff; border-radius:10px; padding:10px 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-weight:700; margin-bottom:8px;">
-    Total General: ${totalGeneral.toFixed(2)} € (Incluye todas las cuotas de alta)
+// Mostrar en caja
+totalBox.innerHTML = `
+<div style="background:#fff; border-radius:10px; padding:10px 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-weight:700; margin-bottom:8px;">
+  Total Anual: ${totalAnual.toFixed(2)} € (Incluye todas las cuotas de alta y meses restantes)
+</div>
+
+<div style="display: flex; gap: 20px; border-top: 1px solid #c0d0c0; padding-top: 4px; flex-wrap: wrap;">
+  <div>
+    <strong>Primer Pago:</strong> ${totalPrimerPago.toFixed(2)} €
+    <div class="small" style="font-weight: normal;">${primerPagoDetail}</div>
   </div>
-
-  <div style="display: flex; gap: 20px; border-top: 1px solid #c0d0c0; padding-top: 4px; flex-wrap: wrap;">
-    <div>
-      <strong>Primer Pago:</strong> ${totalPrimerPago.toFixed(2)} €
-      <div class="small" style="font-weight: normal;">${primerPagoDetail}</div>
-    </div>
-    <div>
-      <strong>Pagos Posteriores:</strong> ${totalMensual.toFixed(2)} €
-      <div class="small" style="font-weight: normal;">(Cuota mensual por ${fees.length} familiares, sin cuota de alta)</div>
-    </div>
+  <div>
+    <strong>Pagos Posteriores:</strong> ${totalPagosPosteriores.toFixed(2)} €
+    <div class="small" style="font-weight: normal;">(Suma de los plazos restantes sin cuota de alta)</div>
   </div>
+</div>
 `;
+
 
 
 
