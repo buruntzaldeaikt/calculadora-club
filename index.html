@@ -551,22 +551,39 @@ f.plazosRestantes = plazos;
 
     const primerPagoDetail = fees.some(f => f.alta > 0) ? `(Cuota club + Cuota de Alta)` : `(Cuota club)`;
 
-    totalBox.innerHTML = `
-      <div style="background:#fff; border-radius:10px; padding:10px 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-weight:700; margin-bottom:8px;">
-        Total Anual: ${totalAnual.toFixed(2)} € (Incluye todas las cuotas de alta y meses restantes)
-      </div>
+    // --- NUEVA SECCIÓN ---
+let pagosPorFamiliar = '';
+fees.forEach((f, idx) => {
+  if (f.plazosRestantes > 1) {
+    pagosPorFamiliar += `
+      <div class="small" style="margin-left:10px;">
+        Familiar ${idx + 1}: ${f.plazosRestantes - 1} pagos de ${f.fee.toFixed(2)} €
+      </div>`;
+  } else {
+    pagosPorFamiliar += `
+      <div class="small" style="margin-left:10px;">
+        Familiar ${idx + 1}: sin pagos posteriores
+      </div>`;
+  }
+});
 
-      <div style="display: flex; gap: 20px; border-top: 1px solid #c0d0c0; padding-top: 4px; flex-wrap: wrap;">
-        <div>
-          <strong>Primer Pago:</strong> ${totalPrimerPago.toFixed(2)} €
-          <div class="small" style="font-weight: normal;">${primerPagoDetail}</div>
-        </div>
-        <div>
-          <strong>Pagos Posteriores:</strong> ${pagosPosterioresTexto}
-          <div class="small" style="font-weight: normal;">${descripcionPagos}</div>
-        </div>
-      </div>
-    `;
+totalBox.innerHTML = `
+  <div style="background:#fff; border-radius:10px; padding:10px 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-weight:700; margin-bottom:8px;">
+    Total Anual: ${totalAnual.toFixed(2)} € (Incluye todas las cuotas de alta y meses restantes)
+  </div>
+
+  <div style="display: flex; gap: 20px; border-top: 1px solid #c0d0c0; padding-top: 4px; flex-wrap: wrap;">
+    <div>
+      <strong>Primer Pago:</strong> ${totalPrimerPago.toFixed(2)} €
+      <div class="small" style="font-weight: normal;">${primerPagoDetail}</div>
+    </div>
+    <div>
+      <strong>Pagos Posteriores:</strong>
+      ${pagosPorFamiliar}
+    </div>
+  </div>
+`;
+
 
 
 
