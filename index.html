@@ -250,24 +250,24 @@ const useRGIcheckbox = document.getElementById('useRGI');
 
 // --------------------- CARGA DE CSV ---------------------
 loadBtn.addEventListener('click', async()=>{
-  loadBtn.disabled=true; loadBtn.textContent='Cargando...';
-  membersContainer.innerHTML=''; summaryArea.style.display='none'; sheets={};
-  try{
-    await Promise.all(Object.entries(csvSheets).map(async([name,url])=>{
-      const r = await fetch(url); if(!r.ok) throw new Error('Error al cargar '+name);
-      const text = await r.text();
-      sheets[name] = csvToObjects(text);
-    }));
-    createMemberBlocks();
-    summaryArea.style.display='block';
-    recalcAll();
-  }catch(e){ alert('Error cargando CSV: '+e.message);}
-  finally{loadBtn.disabled=false; loadBtn.textContent='Datos cargados';}
+  loadBtn.disabled=true; loadBtn.textContent='Cargando...';
+  membersContainer.innerHTML=''; summaryArea.style.display='none'; sheets={};
+  try{
+    await Promise.all(Object.entries(csvSheets).map(async([name,url])=>{
+      const r = await fetch(url); if(!r.ok) throw new Error('Error al cargar '+name);
+      const text = await r.text();
+      sheets[name] = csvToObjects(text);
+    }));
+    createMemberBlocks();
+    summaryArea.style.display='block';
+    recalcAll();
+  }catch(e){ alert('Error cargando CSV: '+e.message);}
+  finally{loadBtn.disabled=false; loadBtn.textContent='Datos cargados';}
 });
 
 totalFamSelect.addEventListener('change',()=>{
-  createMemberBlocks();
-  recalcAll();
+  createMemberBlocks();
+  recalcAll();
 });
 useRGIcheckbox.addEventListener('change', recalcAll);
 
@@ -277,9 +277,8 @@ function createMemberBlocks(){
   const count=Number(totalFamSelect.value);
   for(let i=0;i<count;i++){
     const div=document.createElement('div'); div.className='member';
-    // Usamos flexbox para que los tres divs internos compartan el espacio disponible
     div.innerHTML=`<h3>Familiar ${i+1}</h3>
-    <div style="display: flex; gap: 5px; flex-wrap: wrap;"> 
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;"> 
       <div style="flex: 1; min-width: 280px; align-self: flex-start;"> 
         <label>Selecciona Grupo</label>
         <select class="sheetSelect"></select>
@@ -288,15 +287,17 @@ function createMemberBlocks(){
         <label>Mes de inicio</label>
         <select class="monthSelect"><option>—</option></select>
       </div>
-     <div style="flex: 1; min-width: 250px; align-self: flex-start;"> 
+     <div style="flex: 1; min-width: 250px; align-self: flex-start;"> 
 <label>Cuota aplicada</label>
-        <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;"> 
-          <div class="output feeDisplay" style="flex: 1;">—</div> 
-          <div class="altaCuota" style="white-space: nowrap;"></div> 
-          <div class="plazosCuota small" style="white-space: nowrap;"></div> 
+        <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;"> 
+          <div class="output feeDisplay" style="flex: 1;">—</div> 
+          <div class="altaCuota" style="white-space: nowrap;"></div> 
+          <div class="plazosCuota small" style="white-space: nowrap;"></div> 
         </div>
       </div>
-    <div class="explicacionCuota"></div>`;
+    </div>
+    <div class="explicacionCuota"></div>
+  </div>`;
     membersContainer.appendChild(div);
     const sheetSel = div.querySelector('.sheetSelect');
     Object.keys(csvSheets).forEach(name=>{
@@ -317,36 +318,36 @@ function createMemberBlocks(){
 
 // --------------------- POBLAR MESES ---------------------
 function populateMonthsForMember(memberDiv){
-  const sheetSel = memberDiv.querySelector('.sheetSelect');
-  const monthSel = memberDiv.querySelector('.monthSelect');
-  monthSel.innerHTML = '';
-  const sheet = sheets[sheetSel.value];
-  if(!sheet){ 
-    monthSel.innerHTML='<option>—</option>'; 
-    return;
-  }
-  const months = sheet.map(r => r['Mes inicio']).filter(Boolean);
-  const seen = new Set();
-  const uniq = months.filter(m => (seen.has(m)?false:seen.add(m)));
-  if(uniq.length === 0){
-      monthSel.innerHTML='<option>—</option>';
-  } else {
-      uniq.forEach(m=>{
-          const o = document.createElement('option');
-          o.value = m;
-          o.textContent = m;
-          monthSel.appendChild(o);
-      });
-      monthSel.selectedIndex = 0;
-  }
+  const sheetSel = memberDiv.querySelector('.sheetSelect');
+  const monthSel = memberDiv.querySelector('.monthSelect');
+  monthSel.innerHTML = '';
+  const sheet = sheets[sheetSel.value];
+  if(!sheet){ 
+    monthSel.innerHTML='<option>—</option>'; 
+    return;
+  }
+  const months = sheet.map(r => r['Mes inicio']).filter(Boolean);
+  const seen = new Set();
+  const uniq = months.filter(m => (seen.has(m)?false:seen.add(m)));
+  if(uniq.length === 0){
+      monthSel.innerHTML='<option>—</option>';
+  } else {
+      uniq.forEach(m=>{
+          const o = document.createElement('option');
+          o.value = m;
+          o.textContent = m;
+          monthSel.appendChild(o);
+      });
+      monthSel.selectedIndex = 0;
+  }
 }
 
 // --------------------- PARSE CSV ---------------------
 function csvToObjects(csv){
   const rows=[]; const lines=csv.split(/\r\n|\n/); 
   if(lines.length<9) return rows;
-  const headers=parseCsvLine(lines[7]); // <-- Volvemos a usar la Línea 7
-  for(let i=8;i<lines.length;i++){  // <-- Volvemos a empezar la lectura en la Línea 8
+  const headers=parseCsvLine(lines[7]);
+  for(let i=8;i<lines.length;i++){
     if(!lines[i].trim()) continue;
     const vals=parseCsvLine(lines[i]); 
     const obj={};
@@ -356,295 +357,265 @@ function csvToObjects(csv){
   return rows;
 }
 function parseCsvLine(line){
-  const result=[]; let inQuotes=false, val=''; 
-  for(let i=0;i<line.length;i++){
-    const ch=line[i];
-    if(ch==='\"') inQuotes=!inQuotes;
-    else if(ch===',' && !inQuotes){ result.push(val); val=''; }
-    else val+=ch;
-  }
-  result.push(val); return result;
+  const result=[]; let inQuotes=false, val=''; 
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='\"') inQuotes=!inQuotes;
+    else if(ch===',' && !inQuotes){ result.push(val); val=''; }
+    else val+=ch;
+  }
+  result.push(val); return result;
 }
 
 // --------------------- CÁLCULO DE CUOTAS ---------------------
 function recalcAll(){
-  const members = document.querySelectorAll('.member');
-  const countFam = Number(totalFamSelect.value);
-  const useRGI = useRGIcheckbox.checked;
-  const fees = [];
+  const members = document.querySelectorAll('.member');
+  const countFam = Number(totalFamSelect.value);
+  const useRGI = useRGIcheckbox.checked;
+  const fees = [];
 
-  members.forEach((m)=>{
-    const sheetName = m.querySelector('.sheetSelect').value;
-    const month = m.querySelector('.monthSelect').value;
-    const sheet = sheets[sheetName];
-    let fee = 0;
-    let row = null;
+  members.forEach((m)=>{
+    const sheetName = m.querySelector('.sheetSelect').value;
+    const month = m.querySelector('.monthSelect').value;
+    const sheet = sheets[sheetName];
+    let fee = 0;
+    let row = null;
+    const monthSel = m.querySelector('.monthSelect');
+    const monthIndex = monthSel.selectedIndex;
+    const isMaster = sheetName.includes('Master');
 
-    if(sheet && month && month !== '—'){
-      row = sheet.find(r => r['Mes inicio']?.trim() === month.trim());
-     if(row){
-        // 1. Obtenemos la cuota base de '1 familiar' (o el encabezado de la cuota completa)
+    if(sheet && month && month !== '—'){
+      row = sheet.find(r => r['Mes inicio']?.trim() === month.trim());
+     if(row){
         fee = parseFloat((row['1 familiar']||'0').replace(',','.').replace('€','')) || 0;
-        
-        // 2. Si se usa RGI, aplicamos el descuento del 75% (pagar el 25%)
+        
         if (useRGI && fee > 0) {
-          fee = fee * 0.25; 
+          fee = fee * 0.25; 
         }
       }
-    }
+    }
 
-    fees.push({div:m, fee, row});
-    m.classList.remove('free');
-  });
+    fees.push({div:m, fee, row, sheetName, month, monthIndex, isMaster});
+    m.classList.remove('free');
+  });
 
-  // Ajuste por número de familiares si NO RGI
-  if(!useRGI){
-    if(countFam === 2){
-      fees.forEach(f => {
-        if(f.row) f.fee = parseFloat((f.row['2 familiares']||f.fee).replace(',','.').replace('€','')) || f.fee;
-      });
-    } else if(countFam === 3){
-      const sorted = [...fees].sort((a,b)=>b.fee - a.fee);
-      if(sorted[0] && sorted[0].row) sorted[0].fee = parseFloat((sorted[0].row['2 familiares']||sorted[0].fee).replace(',','.').replace('€','')) || sorted[0].fee;
-      if(sorted[1] && sorted[1].row) sorted[1].fee = parseFloat((sorted[1].row['2 familiares']||sorted[1].fee).replace(',','.').replace('€','')) || sorted[1].fee;
-      if(sorted[2] && sorted[2].row) sorted[2].fee = parseFloat((sorted[2].row['Tercer familiar']||sorted[2].fee).replace(',','.').replace('€','')) || sorted[2].fee;
-    } else if(countFam >= 4){
-      const sorted = [...fees].sort((a,b)=>b.fee - a.fee);
-      if(sorted[0] && sorted[0].row) sorted[0].fee = parseFloat((sorted[0].row['2 familiares']||sorted[0].fee).replace(',','.').replace('€','')) || sorted[0].fee;
-      if(sorted[1] && sorted[1].row) sorted[1].fee = parseFloat((sorted[1].row['2 familiares']||sorted[1].fee).replace(',','.').replace('€','')) || sorted[1].fee;
-      if(sorted[2] && sorted[2].row) sorted[2].fee = parseFloat((sorted[2].row['Tercer familiar']||sorted[2].fee).replace(',','.').replace('€','')) || sorted[2].fee;
-      for(let i=3;i<sorted.length;i++) sorted[i].fee = 0;
-    }
-  }
+  // Ajuste por número de familiares si NO RGI
+  if(!useRGI){
+    if(countFam === 2){
+      fees.forEach(f => {
+        if(f.row) f.fee = parseFloat((f.row['2 familiares']||f.fee).replace(',','.').replace('€','')) || f.fee;
+      });
+    } else if(countFam === 3){
+      const sorted = [...fees].sort((a,b)=>b.fee - a.fee);
+      if(sorted[0] && sorted[0].row) sorted[0].fee = parseFloat((sorted[0].row['2 familiares']||sorted[0].fee).replace(',','.').replace('€','')) || sorted[0].fee;
+      if(sorted[1] && sorted[1].row) sorted[1].fee = parseFloat((sorted[1].row['2 familiares']||sorted[1].fee).replace(',','.').replace('€','')) || sorted[1].fee;
+      if(sorted[2] && sorted[2].row) sorted[2].fee = parseFloat((sorted[2].row['Tercer familiar']||sorted[2].fee).replace(',','.').replace('€','')) || sorted[2].fee;
+    } else if(countFam >= 4){
+      const sorted = [...fees].sort((a,b)=>b.fee - a.fee);
+      if(sorted[0] && sorted[0].row) sorted[0].fee = parseFloat((sorted[0].row['2 familiares']||sorted[0].fee).replace(',','.').replace('€','')) || sorted[0].fee;
+      if(sorted[1] && sorted[1].row) sorted[1].fee = parseFloat((sorted[1].row['2 familiares']||sorted[1].fee).replace(',','.').replace('€','')) || sorted[1].fee;
+      if(sorted[2] && sorted[2].row) sorted[2].fee = parseFloat((sorted[2].row['Tercer familiar']||sorted[2].fee).replace(',','.').replace('€','')) || sorted[2].fee;
+      for(let i=3;i<sorted.length;i++) sorted[i].fee = 0;
+    }
+  }
 
-  // Cuota de alta
-  fees.forEach(f=>{
-    const monthSel = f.div.querySelector('.monthSelect');
-    const altaDiv = f.div.querySelector('.altaCuota');
-    const monthIndex = monthSel.selectedIndex;
-    const alta = (monthIndex >= 1) ? 28 : 0;
-    f.alta = alta;
-    altaDiv.innerHTML = alta ? '<span style="color:#387b5b;">Cuota de Alta: 28 € (Solamente una vez)</span>' : '';
-  });
-
-  // Mostrar cuota
-  fees.forEach(f=>{
-    const display = f.div.querySelector('.feeDisplay');
-    display.textContent = f.fee > 0 ? f.fee.toFixed(2)+' €' : '0 € (no paga)';
-  });
-
- // Plazos
+  // Cuota de alta y Plazos
   fees.forEach(f=>{
-    const monthSel = f.div.querySelector('.monthSelect');
-    const sheetName = f.div.querySelector('.sheetSelect').value; // Necesitamos el grupo para saber si es Master
-    const monthIndex = monthSel.selectedIndex;
-    const isMaster = sheetName.includes('Master');
-// ... (código anterior)
+    const altaDiv = f.div.querySelector('.altaCuota');
+    const monthIndex = f.monthIndex;
+    const isMaster = f.isMaster;
 
-    // Elemento donde mostraremos el texto condicional
-    const explainerDiv = f.div.querySelector('.explicacionCuota'); 
+    // Lógica de Alta: Index 0 (Octubre o Noviembre para Master) NO paga. Index 1 o más SÍ paga 28€.
+    let alta = 0;
+    if (isMaster) {
+        alta = (monthIndex >= 1) ? 28 : 0;
+    } else {
+        alta = (monthIndex >= 1) ? 28 : 0;
+    }
+    f.alta = alta;
+    altaDiv.innerHTML = alta ? `<span style="color:#a0522d;">Cuota de Alta: ${alta.toFixed(2)} €</span>` : '';
+
+    // Lógica de Plazos Restantes
+    let plazos = 6 - monthIndex;
+    if(plazos < 1) plazos = 1;
+
+    f.plazosRestantes = plazos;
+    f.plazosPosteriores = plazos > 1 ? plazos - 1 : 0;
+  });
+
+  // Mostrar cuota y Plazos en los bloques de familiar
+  fees.forEach(f=>{
+    const display = f.div.querySelector('.feeDisplay');
+    display.textContent = f.fee > 0 ? f.fee.toFixed(2)+' €' : '0.00 € (no paga)';
+
+    // Explicación de Cuota y Plazos
+    const explainerDiv = f.div.querySelector('.explicacionCuota'); 
     let explainerText = '';
-
-    // --------------------- Lógica de Explicación Condicional ---------------------
-    // Si el mes de inicio es el segundo o posterior (índice 1 o mayor):
-    if (monthIndex >= 1) {
-      // Definir los meses límite para la explicación
-      const ultimoPlazo = isMaster ? 'abril' : 'marzo';
-      const inicioAlta = isMaster ? '1 de noviembre de 2025' : '1 de octubre de 2025';
-      
+    
+    if (f.monthIndex > 0) {
       explainerText = `
         <p style="font-size: 0.85rem; color: #1e8449; margin-top: 5px; padding: 5px; border-left: 3px solid #1e8449; background-color: #f0fff0;">
-          *Ajuste de Cuota y Plazos:* Si alguien no comienza la temporada al principio, la cuota anual se adapta para que, junto con todos los demás, el último plazo sea en marzo (abril para el grupo Master). Se tienen en cuenta los meses que no se han realizado.
-          <br>
-          **Cuota de Alta:** Quienes comienzan a partir del 1 de octubre (1 de noviembre para el grupo Master) tienen una cuota de alta de 28 €. Quienes se inscriben antes de esa fecha NO pagan cuota de alta.
+          *Ajuste de Cuota y Plazos:* Si la temporada no comienza al principio, la cuota anual se adapta para que, junto con todos los demás, el último plazo sea en marzo (abril para el grupo Master). Se tienen en cuenta los meses que no se han realizado.<br>**Cuota de Alta:** Quienes comienzan a partir del 1 de octubre (1 de noviembre para el grupo Master) tienen una cuota de alta de 28 €. Quienes se inscriben antes de esa fecha NO pagan cuota de alta.
         </p>
       `;
     }
-
     explainerDiv.innerHTML = explainerText;
-    // --------------------- Fin Lógica de Explicación ---------------------
 
-  // ... (el resto del código de plazos, fees.push, etc.)
-    let plazoText = '';
-    let infoPopupText = ''; // Variable para el contenido del popup
-
-    if(monthIndex === 0) {
-      plazoText = '6 plazos domiciliados';
-      infoPopupText = isMaster 
-        ? 'Del 1 al 5 de {Noviembre, Diciembre, Enero, Febrero, Marzo y Abril}'
-        : 'Del 1 al 5 de {Octubre, Noviembre, Diciembre, Enero, Febrero y Marzo}';
-    } else if(monthIndex === 1) {
-      plazoText = '5 plazos domiciliados';
-      infoPopupText = isMaster
-        ? 'Del 1 al 5 de {Diciembre, Enero, Febrero, Marzo y Abril}'
-        : 'Del 1 al 5 de {Noviembre, Diciembre, Enero, Febrero y Marzo}';
-    } else if(monthIndex === 2) {
-      plazoText = '4 plazos domiciliados';
-      infoPopupText = isMaster
-        ? 'Del 1 al 5 de {Enero, Febrero, Marzo y Abril}'
-        : 'Del 1 al 5 de {Diciembre, Enero, Febrero y Marzo}';
-    } else if(monthIndex === 3) {
-      plazoText = '3 plazos domiciliados';
-      infoPopupText = isMaster
-        ? 'Del 1 al 5 de {Febrero, Marzo y Abril}'
-        : 'Del 1 al 5 de {Enero, Febrero y Marzo}';
-    } else if(monthIndex === 4) {
-      plazoText = '2 plazos domiciliados';
-      infoPopupText = isMaster
-        ? 'Del 1 al 5 de {Marzo y Abril}'
-        : 'Del 1 al 5 de {Febrero y Marzo}';
-    } else if(monthIndex === 5) {
-      plazoText = '1 plazo domiciliado';
-      infoPopupText = isMaster
-        ? 'Del 1 al 5 de {Abril}'
-        : 'Del 1 al 5 de {Marzo}';
-    } else {
-      plazoText = '1 pago por transferencia ABANCA ES75...'; // Usamos el texto de la cuota original
-      infoPopupText = 'En el momento de la inscripción. <br>Transferencia a la cuenta del club en ABANCA<br><b>ABANCA ES75 2080 3637 8130 4003 7051</b>';
-      
-      // Corregimos el texto de plazos para meses posteriores al sexto
-      const mesesTransferencia = monthIndex - 5; 
-      plazoText = `1 pago por transferencia `;
-    }
-// --------------------- CALCULAR PLAZOS RESTANTES ---------------------
-let plazos = 6 - monthIndex; // por defecto 6 plazos si es inicio octubre/noviembre
-if(plazos < 1) plazos = 1;   // mínimo 1 pago
-f.plazosRestantes = plazos;
-
-    
-    // Generamos el enlace al popup para mostrar los detalles del cobro
-    const infoLink = `<span class="popupLink" data-info="📅 <b>Fecha de pago:</b><br>${infoPopupText}"><small>[info]</small></span>`;
-
-    f.div.querySelector('.plazosCuota').innerHTML = `${plazoText} ${infoLink}`;
+    // Plazo y Info Popup
+    let plazoText = '';
+    let infoPopupText = ''; 
+    
+    if(f.plazosRestantes > 0) {
+        if (f.plazosRestantes > 1) {
+            plazoText = `${f.plazosRestantes} plazos domiciliados`;
+            const mesesBase = ['Octubre', 'Noviembre', 'Diciembre', 'Enero', 'Febrero', 'Marzo'];
+            const mesesMaster = ['Noviembre', 'Diciembre', 'Enero', 'Febrero', 'Marzo', 'Abril'];
+            const meses = f.isMaster ? mesesMaster : mesesBase;
+            const mesesCobro = meses.slice(f.monthIndex, f.monthIndex + f.plazosRestantes).join(', ');
+            infoPopupText = `Del 1 al 5 de {${mesesCobro}}`;
+        } else {
+            plazoText = '1 pago por transferencia';
+            infoPopupText = 'En el momento de la inscripción. <br>Transferencia a la cuenta del club en ABANCA<br><b>ABANCA ES75 2080 3637 8130 4003 7051</b>';
+        }
+    } else {
+        plazoText = '—';
+    }
+    
+    // **NOTA:** El problema está en cómo se inyecta el HTML que contiene `popupLink`.
+    // La solución es tener un listener que detecte todos los clics en la clase.
+    const infoLink = `<span class="popupLink" data-info="📅 <b>Fecha de pago:</b><br>${infoPopupText}"><small>[info]</small></span>`;
+    f.div.querySelector('.plazosCuota').innerHTML = `${plazoText} ${infoLink}`;
   });
 
 // Total Anual
-    const totalCuotasAnuales = fees.reduce((acc,f)=>acc + f.fee * f.plazosRestantes, 0); // Suma TOTAL de cuotas anuales (sin altas)
-    const totalAltas = fees.reduce((acc,f)=>acc + f.alta, 0); // Suma TOTAL de altas
-    const totalAnual = totalCuotasAnuales + totalAltas; // Total Anual completo
+    const totalCuotasAnuales = fees.reduce((acc,f)=>acc + f.fee * f.plazosRestantes, 0);
+    const totalAltas = fees.reduce((acc,f)=>acc + f.alta, 0);
+    const totalAnual = totalCuotasAnuales + totalAltas;
 
-    const totalPrimerPago = fees.reduce((acc,f)=>acc + f.fee + f.alta, 0); // Primer pago: (1 cuota + alta)
+    // Primer pago: (1 cuota + alta)
+    const totalPrimerPago = fees.reduce((acc,f)=>acc + f.fee + f.alta, 0); 
 
-    // ⬇️ NUEVA LÓGICA PARA EL MONTO Y FORMATO DE PAGOS POSTERIORES
-    
-    // 1. Calcular cuántos plazos quedan después del primero (si son más de 1).
-    const numPagosPosteriores = fees.reduce((acc, f) => acc + (f.plazosRestantes > 1 ? f.plazosRestantes - 1 : 0), 0);
+    // Calcular la suma total de dinero a pagar en los plazos posteriores (sin alta).
+    const montoTotalPagosPosteriores = fees.reduce((acc, f) => acc + f.fee * f.plazosPosteriores, 0); 
+    
+    // ----------------------------------------------------
+    // INYECCIÓN DEL HTML EN totalBox
+    // ----------------------------------------------------
 
-    // 2. Calcular la suma total de dinero a pagar en esos plazos posteriores (sin alta).
-    const montoTotalPagosPosteriores = totalCuotasAnuales - fees.reduce((acc,f)=>acc + f.fee, 0); 
-    
-    // 3. Calcular el monto de CADA pago posterior.
-    let pagoPosteriorPorCuota = 0;
-    if (numPagosPosteriores > 0) {
-      pagoPosteriorPorCuota = montoTotalPagosPosteriores / numPagosPosteriores;
-    }
+    let primerPagoPorFamiliar = '';
+    let pagosPosterioresPorFamiliar = '';
+    
+    fees.forEach((f, idx) => {
+        const montoPrimerPago = f.fee + f.alta;
+        const altaTexto = f.alta > 0 ? ` + ${f.alta.toFixed(2)} € Alta` : '';
+        const nombreGrupo = f.div.querySelector('.sheetSelect').value;
+        
+        // 1. DESGLOSE PRIMER PAGO (Cuota + Alta)
+        primerPagoPorFamiliar += `
+            <div class="small" style="margin-left:10px; font-weight: normal; margin-top: 2px;">
+                Familiar ${idx + 1}: <b>${montoPrimerPago.toFixed(2)} €</b> 
+                (<span title="${nombreGrupo} | Mes de inicio: ${f.month}">${f.fee.toFixed(2)} € Cuota</span>${altaTexto})
+            </div>
+        `;
+        
+        // 2. DESGLOSE PAGOS POSTERIORES
+        if (f.plazosPosteriores > 0) {
+            pagosPosterioresPorFamiliar += `
+                <div class="small" style="margin-left:10px; font-weight: normal; margin-top: 2px;">
+                    Familiar ${idx + 1}: ${f.plazosPosteriores} x ${f.fee.toFixed(2)} €
+                </div>`;
+        } else {
+            pagosPosterioresPorFamiliar += `
+                <div class="small" style="margin-left:10px; font-weight: normal; margin-top: 2px; color: #888;">
+                    Familiar ${idx + 1}: Sin pagos posteriores.
+                </div>`;
+        }
+    });
 
-    // 4. Generar el texto formateado (ej: "5 x 30.50 €")
-    let pagosPosterioresTexto = '';
-    if (numPagosPosteriores > 0) {
-      pagosPosterioresTexto = `${numPagosPosteriores} x ${pagoPosteriorPorCuota.toFixed(2)} €`;
-    } else {
-      pagosPosterioresTexto = '0.00 €';
-    }
-    const descripcionPagos = numPagosPosteriores > 0 ? `(Suma de ${numPagosPosteriores} plazos)` : `(No quedan plazos)`;
+    totalBox.innerHTML = `
+        <div style="background:#fff; border-radius:10px; padding:10px 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-weight:700; margin-bottom:8px; color: #387b5b;">
+            TOTAL ANUAL A PAGAR: ${totalAnual.toFixed(2)} € 
+            <div class="small" style="font-weight: normal; margin-top: 4px;">(Incluye todas las cuotas de alta y meses restantes)</div>
+        </div>
 
+        <div style="display: flex; gap: 20px; border-top: 1px solid #c0d0c0; padding-top: 10px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 250px;">
+                <strong style="display:block; margin-bottom: 5px; color: #a0522d;">PRIMER PAGO TOTAL: ${totalPrimerPago.toFixed(2)} €</strong>
+                ${primerPagoPorFamiliar}
+            </div>
+            <div style="flex: 1; min-width: 250px;">
+                <strong style="display:block; margin-bottom: 5px; color: #2a5a40;">PAGOS POSTERIORES TOTAL: ${montoTotalPagosPosteriores.toFixed(2)} €</strong>
+                <div class="small" style="font-weight: normal; margin-bottom: 5px;">(Suma de todos los plazos que restan después del primero)</div>
+                ${pagosPosterioresPorFamiliar}
+            </div>
+        </div>
+    `;
 
-    const primerPagoDetail = fees.some(f => f.alta > 0) ? `(Cuota club + Cuota de Alta)` : `(Cuota club)`;
-
-    // --- NUEVA SECCIÓN ---
-let pagosPorFamiliar = '';
+ // --------------------- RESUMEN (resultsBox) ---------------------
+resultsBox.innerHTML = '';
 fees.forEach((f, idx) => {
-  if (f.plazosRestantes > 1) {
-    pagosPorFamiliar += `
-      <div class="small" style="margin-left:10px;">
-        Familiar ${idx + 1}: ${f.plazosRestantes - 1} pagos de ${f.fee.toFixed(2)} €
-      </div>`;
-  } else {
-    pagosPorFamiliar += `
-      <div class="small" style="margin-left:10px;">
-        Familiar ${idx + 1}: sin pagos posteriores
-      </div>`;
-  }
+  const sheetName = f.div.querySelector('.sheetSelect').value;
+  const month = f.div.querySelector('.monthSelect').value;
+
+  let cuotaText = f.fee > 0 ? f.fee.toFixed(2)+' €' : '0.00 €';
+  let altaText = f.alta ? ` + Cuota de Alta: 28 €` : '';
+
+  let plazosTotal = f.plazosRestantes;
+  let formaPago = '';
+  let monthIndex = f.div.querySelector('.monthSelect').selectedIndex;
+
+  if (monthIndex >= 0 && monthIndex <= 5) {
+    formaPago = `<span class="popupLink" data-info='🏦↪️ <b>Cobro domiciliado:</b><br>Se realiza mediante domiciliación bancaria mensual.<br>El último plazo es del <b>1 al 5 de marzo</b> a excepción del grupo "<b>Masters</b>", cuyo último plazo es del <b>1 al 5 de abril</b>.'>Cobro domiciliado</span>`;
+  } else {
+    formaPago = `<span class="popupLink" data-info='🏦➡️ <b>Transferencia bancaria:</b><br>Se realiza un único pago a la cuenta ABANCA proporcionada:<br><b>ABANCA ES75 2080 3637 8130 4003 7051</b>.'>Transferencia bancaria</span>`;
+  }
+ 
+  let detallePagoPosterior = '';
+  if (f.plazosPosteriores > 0 && f.fee > 0) {
+    detallePagoPosterior = `
+      <span style="display:block; margin-top:2px; padding-left:10px; font-size:0.8em; color:#555;">
+        ➡️ **Pagos restantes:** ${f.plazosPosteriores} x ${f.fee.toFixed(2)} € (solo cuota club)
+      </span>
+    `;
+  } else if (f.plazosRestantes === 1 && f.fee > 0) {
+    detallePagoPosterior = `
+      <span style="display:block; margin-top:2px; padding-left:10px; font-size:0.8em; color:#555;">
+        ➡️ **Pago único** (Transferencia): ${(f.fee + f.alta).toFixed(2)} €
+      </span>
+    `;
+  }
+
+  const div = document.createElement('div');
+  div.className = 'resumenLine';
+  div.innerHTML = `
+    **Familiar ${idx+1}:** ${sheetName} (${month})<br>
+    **Primer Pago:** <b>${(f.fee + f.alta).toFixed(2)} €</b> (${cuotaText.replace(' €', '')} Cuota ${altaText}) | Plazos totales: ${plazosTotal} (${formaPago})
+    ${detallePagoPosterior}
+  `;
+  resultsBox.appendChild(div);
 });
 
-totalBox.innerHTML = `
-  <div style="background:#fff; border-radius:10px; padding:10px 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-weight:700; margin-bottom:8px;">
-    Total Anual: ${totalAnual.toFixed(2)} € (Incluye todas las cuotas de alta y meses restantes)
-  </div>
+// **Aseguramos que el listener se adjunte después de crear los elementos dinámicos**
+attachPopupListeners();
 
-  <div style="display: flex; gap: 20px; border-top: 1px solid #c0d0c0; padding-top: 4px; flex-wrap: wrap;">
-    <div>
-      <strong>Primer Pago:</strong> ${totalPrimerPago.toFixed(2)} €
-      <div class="small" style="font-weight: normal;">${primerPagoDetail}</div>
-    </div>
-    <div>
-      <strong>Pagos Posteriores:</strong>
-      ${pagosPorFamiliar}
-    </div>
-  </div>
-`;
+} // Cierre correcto de recalcAll()
 
+// --------------------- POPUPS MODERNOS (Función Centralizada) ---------------------
 
-
-
-
- // --------------------- RESUMEN ---------------------
-resultsBox.innerHTML = ''; // limpiar contenido previo
-fees.forEach((f, idx) => {
-  const sheetName = f.div.querySelector('.sheetSelect').value;
-  const month = f.div.querySelector('.monthSelect').value;
-
-  let cuotaText = f.fee > 0 ? f.fee.toFixed(2)+' €' : '0 € (no paga)';
-  let altaText = f.alta ? ' + Cuota de Alta: 28 € (Solamente una vez)' : '';
-
-  let monthIndex = f.div.querySelector('.monthSelect').selectedIndex;
-  let plazos = 1;
-  let formaPago = '';
-
-  if (monthIndex >= 0 && monthIndex <= 5) {
-    plazos = 6 - monthIndex;
-    formaPago = `<span class="popupLink" data-info='🏦↪️ <b>Cobro domiciliado:</b><br>Se realiza mediante domiciliación bancaria mensual.<br>El último plazo es del <b>1 al 5 de marzo</b> a excepción del grupo "<b>Masters</b>", cuyo último plazo es del <b>1 al 5 de abril</b><br><br><br>
-<b>Plazos de domiciliación:</b><br>
-Durante la temporada 2025/2026, los plazos quedarán de la siguiente manera:<br>
-1ª domiciliación: del 1 al 5 de octubre. <b>(Masters NO)</b><br>
-2ª domiciliación: del 1 al 5 de noviembre.(1ª Masters)<br>
-3ª domiciliación: del 1 al 5 de diciembre.(2ª Masters)<br>
-4ª domiciliación: del 1 al 5 de enero.(3ª Masters)<br>
-5ª domiciliación: del 1 al 5 de febrero.(4ª Masters)<br>
-6ª domiciliación: del 1 al 5 de marzo.(5ª Masters)<br>
-7ª domiciliación: del 1 al 5 de marzo.(<b>SOLO Masters, 6ª</b>).'>Cobro domiciliado</span>`;
-  } else {
-    formaPago = `<span class="popupLink" data-info='🏦➡️ <b>Transferencia bancaria:</b><br>La persona que se inscribe realiza un único pago a la cuenta ABANCA proporcionada:<br><b>ABANCA ES75 2080 3637 8130 4003 7051</b>.'>Transferencia bancaria ABANCA ES75 2080 3637 8130 4003 7051</span>`;
-  }
-
-  const div = document.createElement('div');
-  div.className = 'resumenLine';
-  div.innerHTML = `Familiar ${idx+1}: ${sheetName} | ${month} | ${cuotaText}${altaText} | Plazos: ${plazos} (${formaPago})`;
-  resultsBox.appendChild(div);
-});
-
-// --------------------- POPUPS MODERNOS ---------------------
-document.querySelectorAll('.popupLink').forEach(el=>{
-  el.addEventListener('click', e=>{
-    e.preventDefault();
-
-    const infoText = el.dataset.info;
-    // Crear fondo oscuro
+/**
+ * Función genérica para mostrar el popup modal.
+ * @param {string} title - Título del popup.
+ * @param {string} content - Contenido HTML del popup.
+ */
+const showPopup = (title, content, buttonId = 'closePopup') => {
+    // Crear overlay
     const overlay = document.createElement('div');
-    overlay.style.position = 'fixed';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    overlay.className = 'popupOverlay';
     overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '9999';
-    overlay.style.padding = '10px';
-
+    
     // Crear ventana del popup
     const popup = document.createElement('div');
+    // Estilos internos forzados para el popup
     popup.style.background = '#fff';
     popup.style.fontFamily = "'Roboto', Arial, sans-serif";
     popup.style.padding = '22px 26px';
@@ -656,148 +627,71 @@ document.querySelectorAll('.popupLink').forEach(el=>{
     popup.style.lineHeight = '1.5em';
     popup.style.color = '#333';
     popup.innerHTML = `
-      <h3 style="margin-top:0; color:#387b5b; font-size:1.1rem;">Información</h3>
-      <p style="margin-bottom:0.8em;">${infoText}</p>
-      <div style="text-align:right; margin-top:12px;">
-        <button id="closePopup" style="padding:6px 14px; border:none; border-radius:6px; background:#387b5b; color:white; cursor:pointer;">Cerrar</button>
-      </div>
+        <h3 style="margin-top:0; color:#387b5b; font-size:1.1rem;">${title}</h3>
+        <p style="margin-bottom:0.8em;">${content}</p>
+        <div style="text-align:right; margin-top:12px;">
+            <button id="${buttonId}" style="padding:8px 15px; border:0; border-radius:8px; background:#387b5b; color:white; cursor:pointer; font-weight:600;">Cerrar</button>
+        </div>
     `;
-
+    
     overlay.appendChild(popup);
     document.body.appendChild(overlay);
 
-    document.getElementById('closePopup').addEventListener('click', ()=>{
-      overlay.remove();
-    });
-    overlay.addEventListener('click', e=>{
-      if(e.target === overlay) overlay.remove();
-    });
-  });
-});
-// --------------------- POPUP RGI / IMV AL MARCAR CHECKBOX ---------------------
-const rgiCheckbox = document.getElementById('rgiCheck');
-if (rgiCheckbox) {
-  rgiCheckbox.addEventListener('change', () => {
-    if (rgiCheckbox.checked) {
-      const infoText = `
-      💶 <b>Ayuda RGI / IMV</b><br><br>
-      Descuento del <b>75%</b> en la cuota.<br>
-      Si seleccionas este descuento, deberás presentar justificante de haber cobrado la ayuda <b>antes del día 25 de cada mes</b><br>Al seleccionar Ayuda RGI / IMV, descuento del 75% no se aplican los descuentos por familiares.
-      `;
-
-      const overlay = document.createElement('div');
-      overlay.style.position = 'fixed';
-      overlay.style.top = '0';
-      overlay.style.left = '0';
-      overlay.style.width = '100%';
-      overlay.style.height = '100%';
-      overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
-      overlay.style.display = 'flex';
-      overlay.style.alignItems = 'center';
-      overlay.style.justifyContent = 'center';
-      overlay.style.zIndex = '9999';
-      overlay.style.padding = '10px';
-
-      const popup = document.createElement('div');
-      popup.style.background = '#fff';
-      popup.style.fontFamily = "'Roboto', Arial, sans-serif";
-      popup.style.padding = '22px 26px';
-      popup.style.borderRadius = '12px';
-      popup.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
-      popup.style.maxWidth = '420px';
-      popup.style.textAlign = 'left';
-      popup.style.fontSize = '0.95rem';
-      popup.style.lineHeight = '1.5em';
-      popup.style.color = '#333';
-      popup.innerHTML = `
-        <h3 style="margin-top:0; color:#387b5b; font-size:1.1rem;">Información descuento RGI / IMV</h3>
-        <p style="margin-bottom:0.8em;">${infoText}</p>
-        <div style="text-align:right; margin-top:12px;">
-          <button id="closePopup" style="padding:6px 14px; border:none; border-radius:6px; background:#387b5b; color:white; cursor:pointer;">Cerrar</button>
-        </div>
-      `;
-
-      overlay.appendChild(popup);
-      document.body.appendChild(overlay);
-
-      document.getElementById('closeRgiPopup').addEventListener('click', () => {
+    // Cerrar al hacer clic en el botón
+    document.getElementById(buttonId).addEventListener('click', () => {
         overlay.remove();
-      });
-      overlay.addEventListener('click', e => {
-        if (e.target === overlay) overlay.remove();
-      });
+    });
+    // Cerrar al hacer clic fuera del popup
+    overlay.addEventListener('click', closeEvent => {
+        if (closeEvent.target === overlay) overlay.remove();
+    });
+};
+
+/**
+ * Adjunta un listener de eventos a todo el documento para la clase .popupLink
+ * (Necesario para elementos creados dinámicamente)
+ */
+function attachPopupListeners() {
+    // Removemos el listener antiguo si existe para evitar duplicados
+    document.removeEventListener('click', handlePopupClick);
+    
+    // Adjuntamos el nuevo listener
+    document.addEventListener('click', handlePopupClick);
+}
+
+const handlePopupClick = e => {
+    // Verificamos si el elemento clicado o su padre más cercano es un .popupLink
+    const linkElement = e.target.closest('.popupLink');
+
+    if (linkElement) {
+        e.preventDefault();
+        const infoText = linkElement.dataset.info;
+        showPopup('Información de Pago', infoText);
     }
-  });
-}
-}
+};
+
 // --------------------- POPUP RGI / IMV AL MARCAR CHECKBOX ---------------------
 const rgiCheckbox = document.querySelector('#useRGI');
 if (rgiCheckbox) {
-  rgiCheckbox.addEventListener('change', () => {
-    if (rgiCheckbox.checked) {
-      const infoText = `
-      ℹ️ <b>Ayuda RGI / IMV</b><br><br>
-      Descuento del <b>75%</b> en la cuota.<br>
-      Si seleccionas este descuento, deberás presentar justificante de haber cobrado la ayuda <b>antes del día 25 de cada mes</b><br><br>Al seleccionar Ayuda RGI / IMV, descuento del 75% no se aplican los descuentos por familiares.
-      `;
+  rgiCheckbox.addEventListener('change', () => {
+    recalcAll();
+    if (rgiCheckbox.checked) {
+      const infoText = `
+      ℹ️ <b>Ayuda RGI / IMV</b><br><br>
+      Descuento del <b>75%</b> en la cuota.<br>
+      Si seleccionas este descuento, deberás presentar justificante de haber cobrado la ayuda <b>antes del día 25 de cada mes</b><br><br>Al seleccionar Ayuda RGI / IMV, el descuento por familiares no se aplica.
+      `;
 
-      const overlay = document.createElement('div');
-      overlay.style.position = 'fixed';
-      overlay.style.top = '0';
-      overlay.style.left = '0';
-      overlay.style.width = '100%';
-      overlay.style.height = '100%';
-      overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
-      overlay.style.display = 'flex';
-      overlay.style.alignItems = 'center';
-      overlay.style.justifyContent = 'center';
-      overlay.style.zIndex = '9999';
-      overlay.style.padding = '10px';
-
-      const popup = document.createElement('div');
-      popup.style.background = '#fff';
-      popup.style.fontFamily = "'Roboto', Arial, sans-serif";
-      popup.style.padding = '22px 26px';
-      popup.style.borderRadius = '12px';
-      popup.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
-      popup.style.maxWidth = '420px';
-      popup.style.textAlign = 'left';
-      popup.style.fontSize = '0.95rem';
-      popup.style.lineHeight = '1.5em';
-      popup.style.color = '#333';
-      popup.innerHTML = `
-        <h3 style="margin-top:0; color:#387b5b; font-size:1.1rem;">Información descuento RGI / IMV</h3>
-        <p style="margin-bottom:0.8em;">${infoText}</p>
-        <div style="text-align:right; margin-top:12px;">
-          <button id="closeRgiPopup" style="padding:6px 14px; border:none; border-radius:6px; background:#387b5b; color:white; cursor:pointer;">Cerrar</button>
-        </div>
-      `;
-
-      overlay.appendChild(popup);
-      document.body.appendChild(overlay);
-
-      document.getElementById('closeRgiPopup').addEventListener('click', () => {
-        overlay.remove();
-      });
-      overlay.addEventListener('click', e => {
-        if (e.target === overlay) overlay.remove();
-      });
+      showPopup('Información descuento RGI / IMV', infoText, 'closeRgiPopup');
     }
-  });
+  });
 }
 
+// Inicializamos los listeners al cargar la página por primera vez
+attachPopupListeners();
 </script>
-<div id="popupOverlay" class="popupOverlay">
-  <div class="popupBox">
-    <span id="popupClose" class="popupClose">&times;</span>
-    <h3 id="popupTitle">Información</h3>
-    <div id="popupContent"></div>
-  </div>
-</div>
-
 </body>
 </html>
-
 
 
 
