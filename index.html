@@ -455,7 +455,7 @@ function recalcAll(){
     if (f.monthIndex > 0) {
       explainerText = `
         <p style="font-size: 0.85rem; color: #1e8449; margin-top: 5px; padding: 5px; border-left: 3px solid #1e8449; background-color: #f0fff0;">
-          *Ajuste de Cuota y Plazos:* Si la temporada no comienza al principio, la cuota anual se adapta para que, junto con todos los demás, el último plazo sea en marzo (abril para el grupo Master). Se tienen en cuenta los meses que no se han realizado.<br>**Cuota de Alta:** Quienes comienzan a partir del 1 de octubre (1 de noviembre para el grupo Master) tienen una cuota de alta de 28 €. Quienes se inscriben antes de esa fecha NO pagan cuota de alta.
+          *Ajuste de Cuota y Plazos:* Si la persona se hace socio/a en meses que no es el comienzo habitual de temporada (octubre para el grupo Master y septiembre para el resto) , la cuota anual se adapta para que, junto con todos los demás, el último plazo sea en marzo (abril para el grupo Master). Se tienen en cuenta los meses que no se han realizado.<br>**Cuota de Alta:** Quienes comienzan a partir del 1 de octubre (1 de noviembre para el grupo Master) tienen una cuota de alta de 28 €. Quienes se inscriben antes de esa fecha NO pagan cuota de alta.
         </p>
       `;
     }
@@ -565,7 +565,7 @@ fees.forEach((f, idx) => {
   let monthIndex = f.div.querySelector('.monthSelect').selectedIndex;
 
   if (monthIndex >= 0 && monthIndex <= 5) {
-    formaPago = `<span class="popupLink" data-info='🏦↪️ <b>Cobro domiciliado:</b><br>Se realiza mediante domiciliación bancaria mensual.<br>El último plazo es del <b>1 al 5 de marzo</b> a excepción del grupo "<b>Masters</b>", cuyo último plazo es del <b>1 al 5 de abril</b>.'>Cobro domiciliado</span>`;
+    formaPago = `<span class="popupLink" data-info='🏦↪️ <b>Cobro domiciliado:</b><br>Se realiza mediante domiciliación bancaria mensual.<br>El último plazo es del <b>1 al 5 de marzo</b> a excepción del grupo "<b>Master</b>", cuyo último plazo es del <b>1 al 5 de abril</b>.'>Cobro domiciliado</span>`;
   } else {
     formaPago = `<span class="popupLink" data-info='🏦➡️ <b>Transferencia bancaria:</b><br>Se realiza un único pago a la cuenta ABANCA proporcionada:<br><b>ABANCA ES75 2080 3637 8130 4003 7051</b>.'>Transferencia bancaria</span>`;
   }
